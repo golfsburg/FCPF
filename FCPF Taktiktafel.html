@@ -215,7 +215,8 @@
       <label style="font-size:0.65rem;color:#888;font-family:Oswald;letter-spacing:1px">SPD</label>
       <input type="range" id="speed-range" min="0.3" max="3" step="0.1" value="1">
       <div class="toolbar-sep"></div>
-      <button class="btn btn-gray" onclick="exportSVG()">📷 Export</button>
+      <button class="btn btn-gray" onclick="exportSVG()">📷 SVG</button>
+      <button class="btn btn-green" id="export-anim-btn" onclick="exportAnimation()">🎬 Animation</button>
     </div>
 
     <div class="field-wrapper">
@@ -418,8 +419,8 @@ const AGE_CLASSES = {
       },
       '3-1-3-1': {
         label:'3-1-3-1 (Raute)',
-        home:[[300,820],[150,730],[300,710],[450,730],[300,610],[130,500],[300,480],[470,500],[150,390],[300,370],[450,390]],
-        away:[[300,80],[150,170],[300,190],[450,170],[300,290],[130,400],[300,420],[470,400],[150,510],[300,530],[450,510]]
+        home:[[300,820],[150,730],[300,710],[450,730],[300,610],[130,500],[300,480],[470,500],[300,380]],
+        away:[[300,80],[150,170],[300,190],[450,170],[300,290],[130,400],[300,420],[470,400],[300,520]]
       }
     }
   },
@@ -484,7 +485,7 @@ const FORMATION_ROLES = {
   '2-4-2':   ['TW','LV','RV','LM','LZM','RZM','RM','LS','RS'],
   '4-2-2':   ['TW','LV','LIV','RIV','RV','LZM','RZM','LS','RS'],
   '3-4-1':   ['TW','LV','ZV','RV','LM','LZM','RZM','RM','ST'],
-  '3-1-3-1': ['TW','LV','ZV','RV','DM','LM','ZM','RM','LA','ZA','RA'],
+  '3-1-3-1': ['TW','LV','ZV','RV','DM','LM','ZM','RM','ST'],
   // U14+ 11er
   '4-3-3':   ['TW','LV','IL','IR','RV','LM','ZM','RM','LA','MS','RA'],
   '4-4-2':   ['TW','LV','IL','IR','RV','LM','LZM','RZM','RM','LS','RS'],
@@ -823,10 +824,16 @@ svg.addEventListener('dblclick',   onFieldDblClick);
 let drawBlocked = false;
 
 function onSVGPointerDown(e) {
-  // If already dragging a player/ball, block drawing
   if (dragging || draggingBall) { drawBlocked = true; return; }
-  if (drawMode === 'move' || drawMode === 'erase') { drawBlocked = true; return; }
-  // Check target is not a player token
+  if (drawMode === 'move') { drawBlocked = true; return; }
+  // In erase mode: let clicks on annotation elements handle themselves
+  if (drawMode === 'erase') {
+    drawBlocked = true;
+    // Check if clicking on an annotation element and delete it
+    const ann = e.target.closest('[data-ann-idx]');
+    if (ann) { deleteAnnotation(parseInt(ann.getAttribute('data-ann-idx'))); }
+    return;
+  }
   if (e.target.closest && e.target.closest('.player-token')) { drawBlocked = true; return; }
   if (e.target.id === 'ball' || e.target.closest('#ball-group')) { drawBlocked = true; return; }
   drawBlocked = false;
@@ -837,11 +844,15 @@ function onSVGPointerDown(e) {
 
 function onSVGTouchStart(e) {
   if (dragging || draggingBall) { drawBlocked = true; return; }
-  if (drawMode === 'move' || drawMode === 'erase') { drawBlocked = true; return; }
+  if (drawMode === 'move') { drawBlocked = true; return; }
+  if (drawMode === 'erase') {
+    drawBlocked = true;
+    const ann = e.target.closest('[data-ann-idx]');
+    if (ann) { e.preventDefault(); deleteAnnotation(parseInt(ann.getAttribute('data-ann-idx'))); }
+    return;
+  }
   if (e.target.closest && e.target.closest('.player-token')) { drawBlocked = true; return; }
   if (e.target.id === 'ball' || e.target.closest('#ball-group')) { drawBlocked = true; return; }
-
-  // Double-tap on field in move mode = add player (handled in touchend)
   drawBlocked = false;
   e.preventDefault();
   isDrawing = true;
@@ -964,43 +975,55 @@ function clearAnnotations() {
 function renderAnnotations() {
   annotationsLayer.innerHTML = '';
   (annotations[currentFrame] || []).forEach((a, i) => {
-    let el;
+    // Wrapper group carries the index for erase hit-testing
+    const group = document.createElementNS('http://www.w3.org/2000/svg','g');
+    group.setAttribute('data-ann-idx', i);
+    group.style.cursor = drawMode === 'erase' ? 'pointer' : 'default';
+
     if (a.type === 'zone') {
-      el = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      // Invisible fat hit rect for easy clicking
+      if (drawMode === 'erase') {
+        const hit = document.createElementNS('http://www.w3.org/2000/svg','rect');
+        hit.setAttribute('x', a.x - 6); hit.setAttribute('y', a.y - 6);
+        hit.setAttribute('width', a.w + 12); hit.setAttribute('height', a.h + 12);
+        hit.setAttribute('fill', 'rgba(255,0,0,0.01)');
+        hit.setAttribute('stroke', 'none');
+        group.appendChild(hit);
+      }
+      const el = document.createElementNS('http://www.w3.org/2000/svg','rect');
       el.setAttribute('x',a.x); el.setAttribute('y',a.y);
       el.setAttribute('width',a.w); el.setAttribute('height',a.h);
       el.setAttribute('fill','rgba(255,220,0,0.15)');
-      el.setAttribute('stroke','rgba(255,220,0,0.7)');
+      el.setAttribute('stroke', drawMode==='erase' ? 'rgba(255,100,100,0.9)' : 'rgba(255,220,0,0.7)');
       el.setAttribute('stroke-width','2');
       el.setAttribute('stroke-dasharray','6,3');
       el.setAttribute('rx','4');
+      el.style.pointerEvents = 'none';
+      group.appendChild(el);
     } else {
-      el = document.createElementNS('http://www.w3.org/2000/svg','line');
+      // Fat invisible line for easy clicking
+      if (drawMode === 'erase') {
+        const hit = document.createElementNS('http://www.w3.org/2000/svg','line');
+        hit.setAttribute('x1',a.x1); hit.setAttribute('y1',a.y1);
+        hit.setAttribute('x2',a.x2); hit.setAttribute('y2',a.y2);
+        hit.setAttribute('stroke','rgba(255,0,0,0.01)');
+        hit.setAttribute('stroke-width','20');
+        hit.setAttribute('stroke-linecap','round');
+        group.appendChild(hit);
+      }
+      const isball = a.type === 'ball-arrow';
+      const el = document.createElementNS('http://www.w3.org/2000/svg','line');
       el.setAttribute('x1',a.x1); el.setAttribute('y1',a.y1);
       el.setAttribute('x2',a.x2); el.setAttribute('y2',a.y2);
-      const isball = a.type === 'ball-arrow';
-      el.setAttribute('stroke', isball?'rgba(255,220,0,0.9)':'rgba(255,255,255,0.9)');
+      el.setAttribute('stroke', drawMode==='erase' ? 'rgba(255,100,100,0.9)' : (isball?'rgba(255,220,0,0.9)':'rgba(255,255,255,0.9)'));
       el.setAttribute('stroke-width','2.5');
       el.setAttribute('stroke-dasharray', isball?'8,4':'6,3');
       el.setAttribute('marker-end', isball?'url(#ballarrow)':'url(#arrowhead)');
-    }
-    if (drawMode === 'erase') {
-      el.style.cursor = 'pointer';
-      el.setAttribute('stroke-width','8'); // fatter hit zone
-      el.style.strokeOpacity = '0.01'; // keep it nearly invisible but big
-      const vis = el.cloneNode(true);
-      vis.removeAttribute('style');
-      vis.style.pointerEvents = 'none';
-      const group = document.createElementNS('http://www.w3.org/2000/svg','g');
-      const idx = i;
+      el.style.pointerEvents = 'none';
       group.appendChild(el);
-      group.appendChild(vis);
-      group.addEventListener('click',  () => deleteAnnotation(idx));
-      group.addEventListener('touchend', () => deleteAnnotation(idx));
-      annotationsLayer.appendChild(group);
-      return;
     }
-    annotationsLayer.appendChild(el);
+
+    annotationsLayer.appendChild(group);
   });
 }
 
@@ -1174,7 +1197,56 @@ function updatePlayerList() {
 // ══════════════════════════════════════════════════════════
 // EXPORT
 // ══════════════════════════════════════════════════════════
+
+// Render one frame to a canvas PNG blob
+function renderFrameToBlob(frameIdx, cb) {
+  const savedFrame = currentFrame;
+  const savedPlayers = JSON.parse(JSON.stringify(players));
+  const savedBall = {
+    x: parseFloat(document.getElementById('ball').getAttribute('cx')),
+    y: parseFloat(document.getElementById('ball').getAttribute('cy'))
+  };
+
+  // Load frame into SVG temporarily
+  currentFrame = frameIdx;
+  loadFrame(frameIdx);
+
+  const svgEl = document.getElementById('field-svg');
+  const bbox  = svgEl.getBoundingClientRect();
+  const W = 600, H = 900; // use viewBox size for consistent output
+
+  const svgStr = new XMLSerializer().serializeToString(svgEl);
+  const blob   = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
+  const url    = URL.createObjectURL(blob);
+
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width  = W * 1.5; // 900px wide
+    canvas.height = H * 1.5; // 1350px tall
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+
+    canvas.toBlob(pngBlob => {
+      // Restore
+      currentFrame = savedFrame;
+      players = savedPlayers;
+      renderPlayers();
+      renderAnnotations();
+      document.getElementById('ball').setAttribute('cx', savedBall.x);
+      document.getElementById('ball').setAttribute('cy', savedBall.y);
+      document.querySelector('#ball-group text').setAttribute('x', savedBall.x);
+      document.querySelector('#ball-group text').setAttribute('y', savedBall.y+4);
+      cb(pngBlob);
+    }, 'image/png');
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); cb(null); };
+  img.src = url;
+}
+
 function exportSVG() {
+  // Single frame SVG export
   const s = new XMLSerializer();
   const str = s.serializeToString(svg);
   const blob = new Blob([str],{type:'image/svg+xml'});
@@ -1182,6 +1254,98 @@ function exportSVG() {
   const a = document.createElement('a');
   a.href=url; a.download=`FCPF_Taktik_${currentAge}_Bild${currentFrame+1}.svg`;
   a.click(); URL.revokeObjectURL(url);
+}
+
+async function exportAnimation() {
+  if (frames.length < 2) { alert('Mindestens 2 Bilder für Animation benötigt!'); return; }
+  saveFrame();
+
+  const btn = document.getElementById('export-anim-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Exportiere…';
+
+  // Load JSZip dynamically
+  if (!window.JSZip) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+
+  const zip = new JSZip();
+  const folder = zip.folder(`FCPF_${currentAge}_Spielzug`);
+
+  // Export each frame sequentially
+  for (let i = 0; i < frames.length; i++) {
+    btn.textContent = `⏳ Bild ${i+1}/${frames.length}…`;
+    const blob = await new Promise(res => renderFrameToBlob(i, res));
+    if (blob) {
+      folder.file(`Bild_${String(i+1).padStart(2,'0')}.png`, blob);
+    }
+  }
+
+  // Also add a simple HTML animation viewer
+  const htmlViewer = generateAnimViewer();
+  folder.file('Animation.html', htmlViewer);
+
+  btn.textContent = '⏳ ZIP erstellen…';
+  const zipBlob = await zip.generateAsync({type:'blob'});
+  const url = URL.createObjectURL(zipBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `FCPF_${currentAge}_Spielzug_Animation.zip`;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  btn.disabled = false;
+  btn.textContent = '🎬 Animation';
+}
+
+function generateAnimViewer() {
+  // Build a self-contained HTML that shows the PNG frames as a slideshow
+  const speed = parseFloat(document.getElementById('speed-range').value);
+  const delay = Math.round(800 / speed);
+  const count = frames.length;
+  const imgs = Array.from({length:count},(_,i)=>`Bild_${String(i+1).padStart(2,'0')}.png`);
+  return `<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="UTF-8"><title>FCPF Spielzug Animation</title>
+<style>
+  body{margin:0;background:#0d0d0d;display:flex;flex-direction:column;align-items:center;
+    justify-content:center;min-height:100vh;font-family:sans-serif;color:#fff;}
+  img#frame{max-height:90vh;max-width:100%;border-radius:8px;
+    box-shadow:0 0 40px rgba(0,150,0,0.4);}
+  .controls{margin-top:14px;display:flex;gap:10px;align-items:center;}
+  button{padding:8px 18px;background:#2a8a2a;border:none;color:#fff;
+    border-radius:4px;cursor:pointer;font-size:1rem;}
+  button:hover{background:#1a5c1a;}
+  #counter{font-size:0.9rem;color:#6fd46f;min-width:60px;text-align:center;}
+</style>
+</head>
+<body>
+<img id="frame" src="${imgs[0]}" alt="Spielzug">
+<div class="controls">
+  <button onclick="prev()">◀</button>
+  <button id="playbtn" onclick="togglePlay()">▶ Play</button>
+  <span id="counter">1 / ${count}</span>
+  <button onclick="next()">▶</button>
+</div>
+<script>
+const imgs=${JSON.stringify(imgs)};
+let cur=0,playing=false,iv=null;
+function show(i){cur=i;document.getElementById('frame').src=imgs[i];
+  document.getElementById('counter').textContent=(i+1)+' / '+imgs.length;}
+function prev(){clearInterval(iv);playing=false;document.getElementById('playbtn').textContent='▶ Play';
+  show((cur-1+imgs.length)%imgs.length);}
+function next(){show((cur+1)%imgs.length);}
+function togglePlay(){playing=!playing;
+  document.getElementById('playbtn').textContent=playing?'⏸ Pause':'▶ Play';
+  if(playing){iv=setInterval(()=>show((cur+1)%imgs.length),${delay});}
+  else clearInterval(iv);}
+<\/script>
+</body></html>`;
 }
 
 // ══════════════════════════════════════════════════════════
