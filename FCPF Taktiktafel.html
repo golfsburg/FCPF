@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FC Pinggau-Friedberg – Taktiktafel</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Inter:wght@300;400;500&display=swap');
@@ -13,7 +13,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{background:var(--black);color:var(--white);font-family:'Inter',sans-serif;
-    min-height:100vh;display:flex;flex-direction:column;overflow:hidden;
+    min-height:100vh;display:flex;flex-direction:column;
     -webkit-user-select:none;user-select:none;}
 
   header{background:linear-gradient(135deg,var(--black) 0%,var(--green-dark) 100%);
@@ -35,11 +35,12 @@
   .age-tab:hover{color:#aaa;}
   .age-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 
-  .app{display:flex;flex:1;overflow:hidden;height:calc(100vh - 118px);}
+  .app{display:flex;flex:1;min-height:0;}
 
   /* SIDEBAR */
   .sidebar{width:210px;flex-shrink:0;background:var(--gray);
-    border-right:1px solid #333;display:flex;flex-direction:column;overflow-y:auto;}
+    border-right:1px solid #333;display:flex;flex-direction:column;overflow-y:auto;
+    max-height:calc(100vh - 120px);position:sticky;top:0;align-self:flex-start;}
   .sidebar-section{border-bottom:1px solid #333;padding:10px;}
   .sidebar-section h3{font-family:'Oswald',sans-serif;font-size:0.6rem;
     letter-spacing:3px;text-transform:uppercase;color:var(--green-light);margin-bottom:7px;}
@@ -86,7 +87,7 @@
   .tool-btn.active{background:var(--green-mid);border-color:var(--accent);color:var(--accent);}
 
   /* MAIN */
-  .main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+  .main{flex:1;display:flex;flex-direction:column;min-width:0;}
 
   .toolbar{background:var(--gray);border-bottom:1px solid #333;padding:6px 12px;
     display:flex;align-items:center;gap:7px;flex-wrap:wrap;flex-shrink:0;}
@@ -96,11 +97,11 @@
   #speed-range{width:70px;accent-color:var(--green-light);}
 
   .field-wrapper{flex:1;display:flex;align-items:center;justify-content:center;
-    padding:12px;overflow:hidden;background:#111;}
+    padding:12px;background:#111;}
 
   #field-svg{max-height:100%;max-width:100%;aspect-ratio:0.65;border-radius:6px;
     box-shadow:0 0 60px rgba(0,0,0,0.8),0 0 20px rgba(45,140,45,0.3);
-    touch-action:none;}
+    touch-action:pan-x pan-y;}
 
   .anim-panel{background:var(--gray);border-top:1px solid #333;padding:7px 12px;
     display:flex;align-items:center;gap:9px;flex-shrink:0;}
@@ -414,6 +415,11 @@ const AGE_CLASSES = {
         label:'3-4-1',
         home:[[300,820],[140,730],[300,710],[460,730],[100,590],[230,570],[370,570],[500,590],[300,420]],
         away:[[300,80],[140,170],[300,190],[460,170],[100,310],[230,330],[370,330],[500,310],[300,480]]
+      },
+      '3-1-3-1': {
+        label:'3-1-3-1 (Raute)',
+        home:[[300,820],[150,730],[300,710],[450,730],[300,610],[130,500],[300,480],[470,500],[150,390],[300,370],[450,390]],
+        away:[[300,80],[150,170],[300,190],[450,170],[300,290],[130,400],[300,420],[470,400],[150,510],[300,530],[450,510]]
       }
     }
   },
@@ -478,6 +484,7 @@ const FORMATION_ROLES = {
   '2-4-2':   ['TW','LV','RV','LM','LZM','RZM','RM','LS','RS'],
   '4-2-2':   ['TW','LV','LIV','RIV','RV','LZM','RZM','LS','RS'],
   '3-4-1':   ['TW','LV','ZV','RV','LM','LZM','RZM','RM','ST'],
+  '3-1-3-1': ['TW','LV','ZV','RV','DM','LM','ZM','RM','LA','ZA','RA'],
   // U14+ 11er
   '4-3-3':   ['TW','LV','IL','IR','RV','LM','ZM','RM','LA','MS','RA'],
   '4-4-2':   ['TW','LV','IL','IR','RV','LM','LZM','RZM','RM','LS','RS'],
@@ -788,6 +795,10 @@ function setDrawMode(mode) {
   document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
   const el = document.getElementById('btn-'+mode);
   if (el) el.classList.add('active');
+
+  // On touch devices: allow browser scroll/pan when in move mode,
+  // block it when drawing so the finger draws instead of scrolling
+  svg.style.touchAction = (mode === 'move') ? 'pan-x pan-y' : 'none';
 
   const msgs = {
     move:       'BEWEGEN · Spieler/Ball ziehen · Doppeltipp = umbenennen · Doppeltipp Feld = Spieler hinzufügen',
