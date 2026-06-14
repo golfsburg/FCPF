@@ -306,7 +306,41 @@ function pcolor(p){
 }
 
 // ══ AGE / FORMATION ═══════════════════════════════════════
+// ══ ROSTER: per-age name/number storage ══════════════════
+// Saved separately from frame state so names persist across formation changes
+const ROSTER_KEY = 'fcpf_roster_v1';
+
+function saveRoster(){
+  // Save current home player names+numbers keyed by age
+  try{
+    const raw = localStorage.getItem(ROSTER_KEY);
+    const all = raw ? JSON.parse(raw) : {};
+    all[age] = players
+      .filter(p=>p.team==='home'||p.team==='gk')
+      .map(p=>({num:p.num, name:p.name}));
+    localStorage.setItem(ROSTER_KEY, JSON.stringify(all));
+  }catch(e){}
+}
+
+function loadRoster(ageName, playerList){
+  // Restore saved names/numbers for home players by jersey number
+  try{
+    const raw = localStorage.getItem(ROSTER_KEY);
+    if(!raw) return playerList;
+    const all = JSON.parse(raw);
+    const roster = all[ageName];
+    if(!roster) return playerList;
+    return playerList.map(p=>{
+      if(p.team==='away') return p;
+      const saved = roster.find(r=>r.num===p.num);
+      if(saved) return {...p, name:saved.name};
+      return p;
+    });
+  }catch(e){ return playerList; }
+}
+
 function selAge(a,btn){
+  saveRoster(); // save current names before switching
   age=a;
   document.querySelectorAll('.age-tab').forEach(t=>t.classList.remove('active'));
   if(btn) btn.classList.add('active');
@@ -335,6 +369,8 @@ function applyForm(k){
   fd.h.forEach((xy,i)=>{
     players.push({id:nid++,x:xy[0],y:xy[1],name:roles[i]||(i===0?'TW':'S'+i),num:i+1,team:i===0?'gk':'home'});
   });
+  // Restore saved names for this age class
+  players = loadRoster(age, players);
   if(showEnemy){
     players=players.filter(p=>p.team!=='away');
     fd.a?.forEach((xy,i)=>{
@@ -343,7 +379,20 @@ function applyForm(k){
   }
   renderPlayers(); saveF();
 }
-function resetForm(){applyForm(form);}
+function resetForm(){
+  // Reset positions but keep names
+  const savedNames = players
+    .filter(p=>p.team==='home'||p.team==='gk')
+    .map(p=>({num:p.num,name:p.name}));
+  applyForm(form);
+  // Re-apply saved names after reset
+  players = players.map(p=>{
+    if(p.team==='away') return p;
+    const s = savedNames.find(r=>r.num===p.num);
+    return s ? {...p,name:s.name} : p;
+  });
+  renderPlayers(); saveF();
+}
 
 // ══ COLORS ════════════════════════════════════════════════
 function setCol(c,t,el){
@@ -453,8 +502,8 @@ function setMode(m){
     erase:'LÖSCHEN · Auf Pfeil/Zone/Spieler tippen'
   };
   document.getElementById('ib').textContent='MODUS: '+(msgs[m]||'');
-  // Only redraw when switching to/from erase mode (for red highlight + click handlers)
-  if(m==='erase' || prev==='erase') renderAnnotations();
+  // Only update colors/cursors in-place — NEVER rebuild DOM on mode change
+  if(m==='erase' || prev==='erase') updateAnnColors();
 }
 
 // ══ SVG DRAW EVENTS ══════════════════════════════════════
@@ -538,75 +587,123 @@ function finishDraw(pt){
   drawing=false;
   if(!dtmp) return;
   const dist=dstart?Math.hypot(pt.x-dstart.x,pt.y-dstart.y):0;
-  if(dist<8){annL.removeChild(dtmp);dtmp=null;return;}
+  // Remove the temporary preview element
+  if(dtmp.parentNode) dtmp.parentNode.removeChild(dtmp);
+  dtmp=null;
+  if(dist<8){return;}
   if(!anns[cf]) anns[cf]=[];
+  let a;
   if(mode==='zone'){
-    anns[cf].push({type:'zone',x:parseFloat(dtmp.getAttribute('x')),y:parseFloat(dtmp.getAttribute('y')),
-      w:parseFloat(dtmp.getAttribute('width')),h:parseFloat(dtmp.getAttribute('height'))});
+    // Recalculate from current state
+    const x=Math.min(dstart.x,pt.x), y=Math.min(dstart.y,pt.y);
+    a={type:'zone',x,y,w:Math.abs(pt.x-dstart.x),h:Math.abs(pt.y-dstart.y)};
   } else {
-    anns[cf].push({type:mode,x1:dstart.x,y1:dstart.y,x2:pt.x,y2:pt.y});
+    a={type:mode,x1:dstart.x,y1:dstart.y,x2:pt.x,y2:pt.y};
   }
-  dtmp=null; saveF();
+  anns[cf].push(a);
+  // Append directly to DOM — no full re-render needed (like moveP for players)
+  annL.appendChild(makeAnnEl(a, anns[cf].length-1));
+  saveF();
 }
 
-// ══ RENDER ANNOTATIONS ════════════════════════════════════
-// KEY FIX: use fill="rgba(0,0,0,0.001)" NOT "transparent" for hit detection
+// ══ ANNOTATIONS — DOM-first approach (like players) ══════
+// Never wipe annL on mode change. Each annotation has a stable <g data-ai="i">.
+// On mode change: update colors/cursors/listeners in-place.
+
+function makeAnnEl(a, i){
+  // Build one annotation <g> element from data object
+  const inE = mode==='erase';
+  const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('data-ai', i);
+  g.style.cursor = inE ? 'pointer' : 'default';
+
+  if(a.type==='zone'){
+    const hit = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    hit.setAttribute('x',a.x-10); hit.setAttribute('y',a.y-10);
+    hit.setAttribute('width',a.w+20); hit.setAttribute('height',a.h+20);
+    hit.setAttribute('fill','rgba(0,0,0,0.001)'); hit.setAttribute('stroke','none');
+    g.appendChild(hit);
+    const el = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    el.setAttribute('x',a.x); el.setAttribute('y',a.y);
+    el.setAttribute('width',a.w); el.setAttribute('height',a.h);
+    el.setAttribute('fill','rgba(255,220,0,.15)');
+    el.setAttribute('stroke', inE?'rgba(255,80,80,.9)':'rgba(255,220,0,.7)');
+    el.setAttribute('stroke-width','2'); el.setAttribute('stroke-dasharray','6,3'); el.setAttribute('rx','4');
+    el.setAttribute('pointer-events','none');
+    g.appendChild(el);
+  } else {
+    const hit = document.createElementNS('http://www.w3.org/2000/svg','line');
+    hit.setAttribute('x1',a.x1); hit.setAttribute('y1',a.y1);
+    hit.setAttribute('x2',a.x2); hit.setAttribute('y2',a.y2);
+    hit.setAttribute('stroke','rgba(0,0,0,0.001)');
+    hit.setAttribute('stroke-width','24'); hit.setAttribute('stroke-linecap','round');
+    g.appendChild(hit);
+    const isb = a.type==='ball-arrow';
+    const el = document.createElementNS('http://www.w3.org/2000/svg','line');
+    el.setAttribute('x1',a.x1); el.setAttribute('y1',a.y1);
+    el.setAttribute('x2',a.x2); el.setAttribute('y2',a.y2);
+    el.setAttribute('stroke', inE?'rgba(255,80,80,.9)':(isb?'rgba(255,220,0,.9)':'rgba(255,255,255,.9)'));
+    el.setAttribute('stroke-width','2.5');
+    el.setAttribute('stroke-dasharray', isb?'8,4':'6,3');
+    el.setAttribute('marker-end', isb?'url(#bh)':'url(#ah)');
+    el.setAttribute('pointer-events','none');
+    g.appendChild(el);
+  }
+  attachEraseListener(g, i);
+  return g;
+}
+
+function attachEraseListener(g, i){
+  // Always attach — handler checks mode at call time
+  g.addEventListener('mousedown', e=>{
+    if(mode!=='erase') return;
+    e.stopPropagation(); e.preventDefault(); delAnn(parseInt(g.getAttribute('data-ai')));
+  });
+  g.addEventListener('touchstart', e=>{
+    if(mode!=='erase') return;
+    e.stopPropagation(); e.preventDefault(); delAnn(parseInt(g.getAttribute('data-ai')));
+  },{passive:false});
+}
+
 function renderAnnotations(){
-  annL.innerHTML='';
-  (anns[cf]||[]).forEach((a,i)=>{
-    const inE=mode==='erase';
-    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
-    g.style.cursor=inE?'pointer':'default';
+  // Full rebuild — only called on frame change, load, or clear
+  // Remove only annotation <g> elements, keep dtmp if present
+  Array.from(annL.querySelectorAll('g[data-ai]')).forEach(g=>g.remove());
+  (anns[cf]||[]).forEach((a,i) => annL.appendChild(makeAnnEl(a,i)));
+}
 
-    if(a.type==='zone'){
-      // Invisible fat hit area (fill must NOT be transparent — use near-zero opacity)
-      const hit=document.createElementNS('http://www.w3.org/2000/svg','rect');
-      hit.setAttribute('x',a.x-10); hit.setAttribute('y',a.y-10);
-      hit.setAttribute('width',a.w+20); hit.setAttribute('height',a.h+20);
-      hit.setAttribute('fill','rgba(0,0,0,0.001)');
-      hit.setAttribute('stroke','none');
-      g.appendChild(hit);
-      // Visible
-      const el=document.createElementNS('http://www.w3.org/2000/svg','rect');
-      el.setAttribute('x',a.x); el.setAttribute('y',a.y);
-      el.setAttribute('width',a.w); el.setAttribute('height',a.h);
-      el.setAttribute('fill','rgba(255,220,0,.15)');
-      el.setAttribute('stroke',inE?'rgba(255,80,80,.9)':'rgba(255,220,0,.7)');
-      el.setAttribute('stroke-width','2'); el.setAttribute('stroke-dasharray','6,3'); el.setAttribute('rx','4');
-      el.setAttribute('pointer-events','none');
-      g.appendChild(el);
-    } else {
-      // Invisible fat line hit area
-      const hit=document.createElementNS('http://www.w3.org/2000/svg','line');
-      hit.setAttribute('x1',a.x1); hit.setAttribute('y1',a.y1);
-      hit.setAttribute('x2',a.x2); hit.setAttribute('y2',a.y2);
-      hit.setAttribute('stroke','rgba(0,0,0,0.001)');
-      hit.setAttribute('stroke-width','24');
-      hit.setAttribute('stroke-linecap','round');
-      g.appendChild(hit);
-      // Visible
-      const isb=a.type==='ball-arrow';
-      const el=document.createElementNS('http://www.w3.org/2000/svg','line');
-      el.setAttribute('x1',a.x1); el.setAttribute('y1',a.y1);
-      el.setAttribute('x2',a.x2); el.setAttribute('y2',a.y2);
-      el.setAttribute('stroke',inE?'rgba(255,80,80,.9)':(isb?'rgba(255,220,0,.9)':'rgba(255,255,255,.9)'));
-      el.setAttribute('stroke-width','2.5');
-      el.setAttribute('stroke-dasharray',isb?'8,4':'6,3');
-      el.setAttribute('marker-end',isb?'url(#bh)':'url(#ah)');
-      el.setAttribute('pointer-events','none');
-      g.appendChild(el);
-    }
-
-    if(inE){
-      const idx=i;
-      g.addEventListener('mousedown',e=>{e.stopPropagation();e.preventDefault();delAnn(idx);});
-      g.addEventListener('touchstart',e=>{e.stopPropagation();e.preventDefault();delAnn(idx);},{passive:false});
-    }
-    annL.appendChild(g);
+function updateAnnColors(){
+  // Called on erase mode toggle — update colors/cursors WITHOUT removing elements
+  const inE = mode==='erase';
+  Array.from(annL.querySelectorAll('g[data-ai]')).forEach(g=>{
+    g.style.cursor = inE ? 'pointer' : 'default';
+    const els = g.querySelectorAll('rect:not(:first-child), line:not(:first-child)');
+    els.forEach(el=>{
+      const cur = el.getAttribute('stroke')||'';
+      if(cur.includes('80,80') || cur.includes('220,0') || cur.includes('255,255')){
+        // It's a visible element — update color
+        const isb = el.getAttribute('stroke-dasharray')==='8,4';
+        el.setAttribute('stroke', inE?'rgba(255,80,80,.9)':(isb?'rgba(255,220,0,.9)':'rgba(255,255,255,.9)'));
+      }
+      if(el.tagName==='rect' && el.getAttribute('stroke')){
+        el.setAttribute('stroke', inE?'rgba(255,80,80,.9)':'rgba(255,220,0,.7)');
+      }
+    });
   });
 }
 
-function delAnn(i){anns[cf].splice(i,1);renderAnnotations();saveF();}
+function appendAnn(a){
+  // Add one annotation to DOM directly — like moveP for players
+  if(!anns[cf]) anns[cf]=[];
+  const i = anns[cf].length - 1; // already pushed before this call
+  annL.appendChild(makeAnnEl(a, i));
+}
+
+function delAnn(i){
+  anns[cf].splice(i,1);
+  renderAnnotations(); // full rebuild needed to fix indices
+  saveF();
+}
 function clearAnn(){anns[cf]=[];renderAnnotations();saveF();}
 
 // ══ FRAMES ════════════════════════════════════════════════
@@ -667,7 +764,7 @@ function closeEdit(){document.getElementById('emod').classList.remove('open');ed
 function saveEdit(){
   const p=players.find(pl=>pl.id===editId);
   if(p){p.name=document.getElementById('ename').value||p.name;p.num=parseInt(document.getElementById('enum').value)||p.num;}
-  closeEdit(); renderPlayers(); saveF();
+  closeEdit(); renderPlayers(); saveF(); saveRoster();
 }
 function removePlayer(){removeById(editId);closeEdit();}
 function removeById(id){players=players.filter(p=>p.id!==id);renderPlayers();saveF();}
