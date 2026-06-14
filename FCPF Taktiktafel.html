@@ -440,6 +440,7 @@ function onBUT(){dball=false;document.removeEventListener('touchmove',onBT);docu
 
 // ══ DRAW MODE ════════════════════════════════════════════
 function setMode(m){
+  const prev=mode;
   mode=m;
   document.querySelectorAll('.tb').forEach(b=>b.classList.remove('active'));
   const el=document.getElementById('btn-'+m); if(el) el.classList.add('active');
@@ -452,7 +453,8 @@ function setMode(m){
     erase:'LÖSCHEN · Auf Pfeil/Zone/Spieler tippen'
   };
   document.getElementById('ib').textContent='MODUS: '+(msgs[m]||'');
-  renderAnnotations(); // redraw to show/hide erase highlighting
+  // Only redraw when switching to/from erase mode (for red highlight + click handlers)
+  if(m==='erase' || prev==='erase') renderAnnotations();
 }
 
 // ══ SVG DRAW EVENTS ══════════════════════════════════════
