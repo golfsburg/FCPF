@@ -187,6 +187,21 @@ main{max-width:1000px;margin:0 auto;padding:14px 16px 40px}
 .tt .tttw{font-size:.8rem;color:#c3d0db;padding-bottom:8px}
 .tt .ttwarn{color:#ffb3b5}
 @media (max-width:620px){.tt .ttrp{grid-template-columns:56px 64px minmax(0,1fr) auto;grid-template-areas:"ph nr nm nm" "ph tw sh del"}}
+.ghbtn.ro{color:#9fb0bf}.ghbtn.err{border-color:#e5484d;color:#ffb3b5}
+.ghdlg .notesbody{display:flex;flex-direction:column;gap:6px;padding-bottom:14px}
+.ghdlg input{width:100%;font:inherit;font-size:.88rem;background:#0f1720;color:#e8eef3;border:1px solid #33475a;border-radius:8px;padding:8px 10px}
+.ghdlg input:focus,.ghdlg button:focus-visible{outline:2px solid #ffd34d;outline-offset:1px}
+.ghf{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:#7f93a5;font-weight:700;margin-top:4px}
+.ghtxt,.ghhelp{font-size:.82rem;color:#c3d0db;line-height:1.45;margin:0}
+.ghhelp summary{cursor:pointer;font-weight:700;color:#e8eef3}.ghhelp ol{padding-left:18px;margin:6px 0}
+.ghstate{margin:0;font-size:.85rem;font-weight:700;color:#c3d0db}.ghstate.ok{color:#8fe3a1}.ghstate.err{color:#ffb3b5}
+.ghbar{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.ghbar button{font:inherit;font-size:.85rem;background:#1d2a37;color:#e8eef3;border:1px solid #33475a;border-radius:8px;padding:7px 12px;cursor:pointer}
+.ghbar .ghprim{background:#ffd34d;color:#111;border-color:#ffd34d;font-weight:700}
+.ghmsg{font-size:.82rem;color:#ffd34d;margin:0;min-height:1.2em}
+.appbar .iconbtn{white-space:nowrap}
+.appbar h1{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+@media (max-width:520px){#btnFull{display:none}.appbar{gap:8px;padding-left:12px;padding-right:12px}.appbar h1{font-size:.98rem}}
 /* ===== Release Notes ===== */
 .appver{font-size:.72rem;font-weight:700;color:#0f1720;background:#7f93a5;border-radius:6px;padding:2px 6px;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .notesbtn{position:relative}
@@ -3092,25 +3107,31 @@ function ttLocalPersist(){store('ttPlays',JSON.stringify(TT.plays));}
 async function ttSave(p){
   p=Object.assign({},p);const id=p.id||ttNewId();delete p.id;
   if(TT.mode==='db'){await TT.db.collection('plays').doc(id).set(p);}
+  else if(TT.mode==='gh'){await ghSaveItem('plays',id,p);}
   else{const i=TT.plays.findIndex(x=>x.id===id);const rec=Object.assign({id},p);if(i>=0)TT.plays[i]=rec;else TT.plays.push(rec);ttLocalPersist();ttNotify();}
   return id;
 }
 async function ttRemove(id){
   if(TT.mode==='db'){await TT.db.collection('plays').doc(id).delete();}
+  else if(TT.mode==='gh'){await ghRemoveItem('plays',id);}
   else{TT.plays=TT.plays.filter(p=>p.id!==id);ttLocalPersist();ttNotify();}
 }
 async function ttInit(){
   let db=null;
   try{if(window.claude&&typeof window.claude.use==='function')db=await window.claude.use('db');}catch(e){db=null;}
-  if(!db){ttLocalLoad();ttTeamsInit();return;}
+  if(!db){if(ghInit())return;ttLocalLoad();ttTeamsInit();return;}
   TT.db=db;ttTeamsInit();
   try{db.collection('plays').onSnapshot(s=>{TT.mode='db';
       TT.plays=s.docs.map(x=>Object.assign({id:x.id},x.data()||{})).sort((a,b)=>(a.created||0)-(b.created||0));ttNotify();},
     ()=>{if(TT.mode!=='db')ttLocalLoad();});}catch(e){ttLocalLoad();}
 }
+/* einheitliche Fehlermeldung beim Speichern/Löschen */
+function ttErr(what,e){let m=String((e&&e.message)||e||'').replace(/\.+$/,'');
+  return what+' fehlgeschlagen'+(m?': '+m:'')+'.'+(TT.mode==='db'?' Du brauchst Bearbeitungsrechte für diese Seite.':'');}
 function ttStorageNote(){
   if(TT.mode==='db')return'Spielzüge werden in der App gespeichert und stehen auf allen Geräten zur Verfügung, auf denen du diese Seite öffnest.';
-  if(TT.mode==='local')return'Spielzüge werden nur in diesem Browser gespeichert (geteilte Speicherung ist hier nicht verfügbar).';
+  if(TT.mode==='gh')return'Gemeinsamer Speicher: GitHub '+GH.cfg.owner+'/'+GH.cfg.repo+(ghCanWrite()?' – du kannst speichern.':' – nur lesen. Zum Speichern oben unter „☁“ einen GitHub-Zugang eintragen.')+(GH.lastErr?' Fehler: '+GH.lastErr:'');
+  if(TT.mode==='local')return'Spielzüge werden nur in diesem Browser gespeichert. Für gemeinsames Speichern oben unter „☁ Lokal“ ein GitHub-Repository verbinden.';
   return'Speicher wird verbunden …';
 }
 /* ---------- Kategorien (Idee 12) ----------
@@ -3697,7 +3718,7 @@ function mountTTEditor(root){
     if(ex)doc.id=pid;
     smsg('Speichere …');q('bSave').disabled=true;
     try{const id=await ttSave(doc);pid=id;q('name').value=name;smsg('Gespeichert als „'+name+'“ unter '+ttCatLabel(cg.cat)+' › '+cg.group+'.');saveDraft();renderSteps();}
-    catch(e){smsg('Speichern fehlgeschlagen: '+((e&&e.message)||e)+'. Du brauchst Bearbeitungsrechte für diese Seite.');}
+    catch(e){smsg(ttErr('Speichern',e));}
     q('bSave').disabled=false;
   }
   q('bSave').onclick=()=>save(false);
@@ -3783,7 +3804,7 @@ function mountTTImport(root){
     try{const E=v3();const cg=catF.get();const id=await ttSave({name:q('name').value.trim()||'Spielzug',desc:q('desc').value.trim(),cat:cg.cat,group:cg.group,data:JSON.stringify(E),
         frames:E.frames.length,age:E.age,form:E.form,fmt:3,created:Date.now(),updated:Date.now()});
       TT.pending='tt-'+id;ttSyncExercises();}
-    catch(e){q('saveMsg').textContent='Speichern fehlgeschlagen: '+((e&&e.message)||e)+'. Du brauchst Bearbeitungsrechte für diese Seite.';}
+    catch(e){q('saveMsg').textContent=ttErr('Speichern',e);}
     b.disabled=false;
   };
   q('bEdit').onclick=()=>{if(!M)return;try{const E=v3();store('ttDraft',JSON.stringify(Object.assign({E,pid:null,cf:0,name:q('name').value,desc:q('desc').value},catF.get())));openExercise('tt-editor');}
@@ -3800,7 +3821,7 @@ function mountTTImport(root){
       c.querySelector('.ttdel').onclick=e=>{e.stopPropagation();cf.hidden=false;};
       c.querySelector('.ttdup').onclick=e=>{e.stopPropagation();ttDuplicate({pid:p.id},t=>{q('store').textContent=t;});};
       c.querySelector('.ttno').onclick=e=>{e.stopPropagation();cf.hidden=true;};
-      c.querySelector('.ttyes').onclick=async e=>{e.stopPropagation();try{await ttRemove(p.id);}catch(err){cf.textContent='Löschen fehlgeschlagen. Du brauchst Bearbeitungsrechte für diese Seite.';}};
+      c.querySelector('.ttyes').onclick=async e=>{e.stopPropagation();try{await ttRemove(p.id);}catch(err){cf.textContent=ttErr('Löschen',typeof err!=='undefined'?err:e);}};
       cf.onclick=e=>e.stopPropagation();el.appendChild(c);});
     q('store').textContent=ttStorageNote();catF.refresh();
   }
@@ -3837,7 +3858,7 @@ function mountTTPlay(root,pid){
   const p0=getP();const catF=ttCatFields(q('catHost'),p0?ttCatOf(p0):'tt',p0?p0.group||'':'',()=>{catDirty=true;});
   q('bCat').onclick=async()=>{const p=getP();if(!p)return;const cg=catF.get();q('catMsg').textContent='Speichere …';
     try{await ttSave(Object.assign({},p,cg));catDirty=false;q('catMsg').textContent='Verschoben nach '+ttCatLabel(cg.cat)+' › '+cg.group+'.';}
-    catch(e){q('catMsg').textContent='Speichern fehlgeschlagen. Du brauchst Bearbeitungsrechte für diese Seite.';}};
+    catch(e){q('catMsg').textContent=ttErr('Speichern',e);}};
   function refresh(){
     const p=getP();if(!p)return;
     q('title').textContent=p.name||'Spielzug';
@@ -3858,7 +3879,7 @@ function mountTTPlay(root,pid){
     try{navigator.clipboard.writeText(txt).then(()=>msg('Spielzug als Text kopiert. Einfügen unter Taktiktafel › Importieren.'),show);}catch(e){show();}};
   q('bDel').onclick=()=>{q('confirm').hidden=false;q('bDel').hidden=true;};
   q('bNo').onclick=()=>{q('confirm').hidden=true;q('bDel').hidden=false;};
-  q('bYes').onclick=async()=>{try{await ttRemove(pid);}catch(e){msg('Löschen fehlgeschlagen. Du brauchst Bearbeitungsrechte für diese Seite.');q('confirm').hidden=true;q('bDel').hidden=false;}};
+  q('bYes').onclick=async()=>{try{await ttRemove(pid);}catch(e){msg(ttErr('Löschen',typeof err!=='undefined'?err:e));q('confirm').hidden=true;q('bDel').hidden=false;}};
   TT.listeners.push(refresh);refresh();
   return function destroy(){TT.listeners=TT.listeners.filter(f=>f!==refresh);player.destroy();};
 }
@@ -3950,7 +3971,7 @@ async function ttDuplicate(src,onMsg){
     TT.editPid=id;TT.dupNote='Kopie „'+doc.name+'“ angelegt. Ändere sie hier und speichere – das Original bleibt unverändert.';
     const go=()=>{if(TT.plays.some(p=>p.id===id)){openExercise('tt-editor');return true;}return false;};
     if(!go()){let n=0;const iv=setInterval(()=>{if(go()||++n>40){clearInterval(iv);if(n>40)openExercise('tt-editor');}},100);}
-  }catch(e){msg('Duplizieren fehlgeschlagen: '+((e&&e.message)||e)+(TT.mode==='db'?' Du brauchst Bearbeitungsrechte für diese Seite.':''));}
+  }catch(e){msg(ttErr('Duplizieren',e));}
 }
 
 /* ---------- Übungen allgemein (Erweiterung von Idee 11) ----------
@@ -4039,12 +4060,14 @@ function ttTeamsNotify(){TT.listeners.slice().forEach(f=>{try{f()}catch(e){}});T
 async function ttSaveTeam(t){
   t=Object.assign({},t);const id=t.id||('t'+Date.now().toString(36));delete t.id;t.updated=Date.now();
   if(TT.mode==='db')await TT.db.collection('teams').doc(id).set(t);
+  else if(TT.mode==='gh')await ghSaveItem('teams',id,t);
   else{const i=TT.teams.findIndex(x=>x.id===id),rec=Object.assign({id},t);if(i>=0)TT.teams[i]=rec;else TT.teams.push(rec);
     store('ttTeams',JSON.stringify(TT.teams));ttTeamsNotify();}
   return id;
 }
 async function ttRemoveTeam(id){
   if(TT.mode==='db')await TT.db.collection('teams').doc(id).delete();
+  else if(TT.mode==='gh')await ghRemoveItem('teams',id);
   else{TT.teams=TT.teams.filter(t=>t.id!==id);store('ttTeams',JSON.stringify(TT.teams));ttTeamsNotify();}
 }
 function ttTeamsInit(){
@@ -4129,7 +4152,7 @@ function mountTTTeams(root){
       msg('Speichere …');
       try{const id=await ttSaveTeam(Object.assign({},draft,{id:curId||undefined,name:(draft.name||'').trim()||'Mannschaft'}));
         curId=id;store('ttTeamSel',id);dirty=false;msg('Gespeichert.');}
-      catch(e){msg('Speichern fehlgeschlagen: '+((e&&e.message)||e)+'. Du brauchst Bearbeitungsrechte für diese Seite.');}};
+      catch(e){msg(ttErr('Speichern',e));}};
     const dt=f('[data-a="delTeam"]');if(dt){dt.onclick=()=>{f('[data-a="conf"]').hidden=false;};
       f('[data-a="no"]').onclick=()=>{f('[data-a="conf"]').hidden=true;};
       f('[data-a="yes"]').onclick=async()=>{try{await ttRemoveTeam(curId);curId=null;draft=null;load();}catch(e){msg('Löschen fehlgeschlagen.');}};}
@@ -4143,8 +4166,12 @@ function mountTTTeams(root){
    RELEASE NOTES (Kurzform) – Langform im Dokument „Release Notes & Ideen“
    Neue Version: oben in APP_NOTES einfügen, APP_VERSION anpassen.
    ===================================================================== */
-const APP_VERSION='2.8';
+const APP_VERSION='2.9';
 const APP_NOTES=[
+ {v:'2.9',d:'24.10.2026',t:'Gemeinsamer Speicher auf GitHub',items:[
+   'GitHub-Version: Spielzüge und Mannschaften liegen im Repository und sind für alle sichtbar',
+   'Speichern mit eigenem GitHub-Zugang – oben unter „☁“',
+   'Ohne Zugang: nur lesen. Änderungen anderer werden automatisch nachgeladen']},
  {v:'2.8',d:'24.10.2026',t:'Mannschaften mit Foto',items:[
    'Neu unter Taktiktafel › Mannschaften: Kader mit Foto, Nummer und Namen',
    'Im Editor Mannschaft wählen und mit „👕 Aufstellen“ auf die Positionen setzen',
@@ -4210,6 +4237,152 @@ const APP_NOTES=[
   btn.onclick=open;ov.querySelector('[data-x]').onclick=close;
   ov.addEventListener('click',e=>{if(e.target===ov)close();});
   document.addEventListener('keydown',e=>{if(!ov.hidden&&e.key==='Escape'){e.stopPropagation();close();}},true);
+})();
+
+
+/* =====================================================================
+   GEMEINSAMER SPEICHER AUF GITHUB (Idee 15)
+   Ohne Claude-Datenbank (z. B. auf GitHub Pages) liegen Spielzüge und
+   Kader als JSON im Repository: data/plays.json, data/teams.json.
+   Lesen: für alle. Schreiben: mit persönlichem GitHub-Zugang (Token),
+   der nur im Browser des Trainers gespeichert wird.
+   ===================================================================== */
+const GH={cfg:null,sha:{},timer:0,lastErr:'',listeners:[]};
+const GH_FILES={plays:'data/plays.json',teams:'data/teams.json'};
+function ghDetect(){
+  try{const m=/^([a-z0-9-]+)\.github\.io$/i.exec(location.hostname);
+    if(m){const seg=location.pathname.split('/').filter(Boolean)[0];return{owner:m[1],repo:seg&&!/\.html?$/i.test(seg)?seg:m[1]+'.github.io'};}}catch(e){}
+  return null;
+}
+function ghCfgLoad(){
+  let c=null;try{c=JSON.parse(store('ttGh')||'null');}catch(e){}
+  const d=ghDetect();if(!c&&!d)return null;
+  c=Object.assign({branch:'main',token:''},d||{},c||{});
+  return c.owner&&c.repo?c:null;
+}
+const ghCanWrite=()=>!!(GH.cfg&&GH.cfg.token);
+function ghStatus(){GH.listeners.slice().forEach(f=>{try{f()}catch(e){}});}
+function b64enc(str){const b=new TextEncoder().encode(str);let s='';for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s);}
+function b64dec(b64){const s=atob(String(b64||'').replace(/\s/g,''));const u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return new TextDecoder().decode(u);}
+async function ghApi(path,opt={},cfg){
+  const c=cfg||GH.cfg,h={'Accept':'application/vnd.github+json'};
+  if(c.token)h.Authorization='Bearer '+c.token;if(opt.body)h['Content-Type']='application/json';
+  return fetch('https://api.github.com/repos/'+encodeURIComponent(c.owner)+'/'+encodeURIComponent(c.repo)+path,{method:opt.method||'GET',headers:h,body:opt.body,cache:'no-store'});
+}
+function ghErr(r){
+  if(r.status===401)return new Error('GitHub-Zugang ungültig oder abgelaufen.');
+  if(r.status===403||r.status===429)return new Error(r.headers&&r.headers.get('x-ratelimit-remaining')==='0'
+    ?'GitHub-Abfragegrenze erreicht – bitte später erneut versuchen oder einen Zugang eintragen.':'Keine Schreibrechte für dieses Repository.');
+  if(r.status===404)return new Error('Repository oder Datei nicht gefunden.');
+  return new Error('GitHub-Fehler '+r.status+'.');
+}
+async function ghGet(kind){
+  const r=await ghApi('/contents/'+GH_FILES[kind]+'?ref='+encodeURIComponent(GH.cfg.branch||'main'));
+  if(r.status===404)return{list:[],sha:null};
+  if(!r.ok)throw ghErr(r);
+  const j=await r.json();let list=[];
+  if(j.content)list=JSON.parse(b64dec(j.content));
+  else if(j.download_url){const d=await fetch(j.download_url,{cache:'no-store'});list=await d.json();}
+  return{list:Array.isArray(list)?list:[],sha:j.sha};
+}
+async function ghPut(kind,list,sha,msg){
+  const body={message:msg,content:b64enc(JSON.stringify(list,null,1)+'\n'),branch:GH.cfg.branch||'main'};if(sha)body.sha=sha;
+  const r=await ghApi('/contents/'+GH_FILES[kind],{method:'PUT',body:JSON.stringify(body)});
+  if(r.status===409||r.status===422)return null;   /* inzwischen geändert → neu laden und erneut versuchen */
+  if(!r.ok)throw ghErr(r);
+  return (await r.json()).content.sha;
+}
+function ghApply(kind,list){
+  if(kind==='plays'){TT.plays=list.slice().sort((a,b)=>(a.created||0)-(b.created||0));ttNotify();}
+  else{TT.teams=list.slice().sort((a,b)=>String(a.name).localeCompare(String(b.name)));ttTeamsNotify();}
+}
+async function ghUpdate(kind,mut,msg){
+  if(!ghCanWrite())throw new Error('Nur lesen – zum Speichern unter „☁ Speicher“ einen GitHub-Zugang eintragen.');
+  for(let i=0;i<4;i++){
+    const {list,sha}=await ghGet(kind);const nl=mut(list.slice());
+    const ns=await ghPut(kind,nl,sha,msg);
+    if(ns){GH.sha[kind]=ns;GH.lastErr='';ghApply(kind,nl);ghStatus();return;}
+    await new Promise(r=>setTimeout(r,500*(i+1)));
+  }
+  throw new Error('Gleichzeitig hat jemand anderes gespeichert – bitte noch einmal versuchen.');
+}
+const ghLabel=kind=>kind==='plays'?'Spielzug':'Mannschaft';
+function ghSaveItem(kind,id,rec){return ghUpdate(kind,l=>{const i=l.findIndex(x=>x.id===id),r=Object.assign({id},rec);if(i>=0)l[i]=r;else l.push(r);return l;},
+  ghLabel(kind)+' „'+(rec.name||id)+'“ gespeichert');}
+function ghRemoveItem(kind,id){return ghUpdate(kind,l=>l.filter(x=>x.id!==id),ghLabel(kind)+' '+id+' gelöscht');}
+async function ghRefresh(){
+  if(TT.mode!=='gh')return;
+  try{for(const kind of ['teams','plays']){const {list,sha}=await ghGet(kind);if(sha!==GH.sha[kind]||sha===null&&!GH.loaded){GH.sha[kind]=sha;ghApply(kind,list);}}
+    GH.loaded=true;GH.lastErr='';}
+  catch(e){GH.lastErr=e.message||String(e);}
+  ghStatus();ttNotify();
+}
+function ghStart(cfg){
+  GH.cfg=cfg;GH.sha={};GH.loaded=false;TT.mode='gh';clearInterval(GH.timer);
+  GH.timer=setInterval(()=>{if(document.visibilityState==='visible')ghRefresh();},ghCanWrite()?30000:120000);
+  ghRefresh();
+}
+function ghInit(){const c=ghCfgLoad();if(!c)return false;ghStart(c);return true;}
+try{document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&TT.mode==='gh')ghRefresh();});}catch(e){}
+
+/* ---------- Dialog „☁ Speicher“ ---------- */
+(function setupGhDialog(){
+  const bar=document.querySelector('.appbar'),anchor=document.getElementById('btnNotes')||document.getElementById('btnFull');
+  const btn=document.createElement('button');btn.className='iconbtn ghbtn';btn.id='btnGh';btn.type='button';btn.hidden=true;
+  btn.setAttribute('aria-haspopup','dialog');btn.innerHTML='☁ <span data-g="lbl">Speicher</span>';bar.insertBefore(btn,anchor);
+  const ov=document.createElement('div');ov.className='notesov';ov.hidden=true;
+  ov.innerHTML=`<div class="notesdlg ghdlg" role="dialog" aria-modal="true" aria-labelledby="ghTitle">
+    <div class="noteshead"><h2 id="ghTitle">Gemeinsamer Speicher</h2><button type="button" class="iconbtn" data-x aria-label="Schließen">✕</button></div>
+    <div class="notesbody">
+      <p class="ghstate" data-g="state"></p>
+      <p class="ghtxt">Spielzüge und Mannschaften liegen im GitHub-Repository als <code>data/plays.json</code> und <code>data/teams.json</code>. Lesen kann jeder, der die Seite öffnet. Zum Speichern braucht jeder Trainer einen eigenen GitHub-Zugang.</p>
+      <label class="ghf" for="ghRepo">Repository (Besitzer/Name)</label><input id="ghRepo" type="text" autocomplete="off" placeholder="golfsburg/FCPF">
+      <label class="ghf" for="ghBranch">Branch</label><input id="ghBranch" type="text" autocomplete="off" placeholder="main">
+      <label class="ghf" for="ghToken">GitHub-Zugang (Token)</label><input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_…">
+      <div class="ghbar"><button type="button" class="ghprim" data-g="save">Verbinden</button><button type="button" data-g="reload">Jetzt aktualisieren</button><button type="button" data-g="forget">Zugang entfernen</button></div>
+      <p class="ghmsg" data-g="msg" role="status"></p>
+      <details class="ghhelp"><summary>So bekommst du einen Zugang</summary><ol>
+        <li>Auf github.com anmelden → Profilbild → <b>Settings</b> → <b>Developer settings</b> → <b>Personal access tokens</b> → <b>Fine-grained tokens</b> → <b>Generate new token</b>.</li>
+        <li>Name z. B. „Trainingsmanager“, Ablaufdatum wählen.</li>
+        <li><b>Repository access:</b> „Only select repositories“ → das Repository dieser App.</li>
+        <li><b>Permissions → Repository permissions → Contents:</b> „Read and write“.</li>
+        <li>Token erzeugen, kopieren und oben einfügen. Der Besitzer des Repositorys muss Co-Trainer vorher als Collaborator einladen.</li>
+      </ol><p>Der Token bleibt nur in diesem Browser. Auf gemeinsam genutzten Geräten nach dem Training „Zugang entfernen“.</p></details>
+    </div></div>`;
+  document.body.appendChild(ov);
+  const g=n=>ov.querySelector('[data-g="'+n+'"]'),msg=t=>{g('msg').textContent=t||'';};
+  function fill(){const c=GH.cfg||ghCfgLoad()||{};ov.querySelector('#ghRepo').value=c.owner?c.owner+'/'+c.repo:'';
+    ov.querySelector('#ghBranch').value=c.branch||'main';ov.querySelector('#ghToken').value=c.token||'';}
+  function update(){
+    btn.hidden=TT.mode==='db'||TT.mode==='init';
+    const w=ghCanWrite(),on=TT.mode==='gh';
+    btn.classList.toggle('ro',on&&!w);btn.classList.toggle('err',on&&!!GH.lastErr);
+    btn.querySelector('[data-g="lbl"]').textContent=!on?'Lokal':GH.lastErr?'Fehler':w?'GitHub':'Nur lesen';
+    g('state').textContent=!on?'Nicht verbunden – Daten liegen nur in diesem Browser.'
+      :(GH.cfg.owner+'/'+GH.cfg.repo+' · '+(w?'lesen und speichern':'nur lesen')+(GH.lastErr?' · '+GH.lastErr:''));
+    g('state').className='ghstate'+(GH.lastErr?' err':on?' ok':'');
+  }
+  GH.listeners.push(update);TT.listeners.push(update);
+  let back=null;
+  function open(){back=document.activeElement;fill();update();msg('');ov.hidden=false;ov.querySelector('[data-x]').focus();}
+  function close(){ov.hidden=true;if(back&&back.focus)back.focus();}
+  btn.onclick=open;ov.querySelector('[data-x]').onclick=close;ov.addEventListener('click',e=>{if(e.target===ov)close();});
+  document.addEventListener('keydown',e=>{if(!ov.hidden&&e.key==='Escape'){e.stopPropagation();close();}},true);
+  g('save').onclick=async()=>{
+    const rp=ov.querySelector('#ghRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'').split('/');
+    if(rp.length<2||!rp[0]||!rp[1]){msg('Bitte Repository als „Besitzer/Name“ eintragen, z. B. golfsburg/FCPF.');return;}
+    const cfg={owner:rp[0],repo:rp[1],branch:ov.querySelector('#ghBranch').value.trim()||'main',token:ov.querySelector('#ghToken').value.trim()};
+    msg('Verbinde …');
+    try{const r=await ghApi('',{},cfg);if(!r.ok)throw ghErr(r);const j=await r.json();
+      if(cfg.token&&!(j.permissions&&j.permissions.push)){msg('Der Zugang hat keine Schreibrechte für '+j.full_name+'. Bitte bei „Contents“ „Read and write“ wählen.');return;}
+      store('ttGh',JSON.stringify(cfg));ghStart(cfg);
+      msg(cfg.token?'Verbunden – du kannst jetzt speichern.':'Verbunden – nur lesen.');}
+    catch(e){msg('Verbindung fehlgeschlagen: '+(e.message||e));}
+  };
+  g('reload').onclick=async()=>{if(TT.mode!=='gh'){msg('Zuerst verbinden.');return;}msg('Lade …');await ghRefresh();msg(GH.lastErr?'Fehler: '+GH.lastErr:'Aktuell.');};
+  g('forget').onclick=()=>{const c=Object.assign({},GH.cfg||ghCfgLoad()||{});c.token='';
+    if(c.owner){store('ttGh',JSON.stringify(c));ghStart(c);}ov.querySelector('#ghToken').value='';msg('Zugang entfernt – nur noch lesen.');update();};
+  update();
 })();
 
 /* Speicher erst verbinden, wenn alle Funktionen definiert sind */
