@@ -1,4 +1,3 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -172,6 +171,22 @@ main{max-width:1000px;margin:0 auto;padding:14px 16px 40px}
 .tt .ttdup:hover{background:#223142;border-color:#33475a}
 .ttdupbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px}
 .ttdupmsg{font-size:.8rem;color:#9fb0bf}
+.exopts label.off{opacity:.4;cursor:not-allowed}
+.exopts{margin-bottom:0}
+.tt .ttselsm{width:auto;min-width:180px;padding:6px 10px}
+.tt .ttkader{display:flex;flex-direction:column;gap:4px;margin:8px 0 2px}
+.tt .ttroster{display:flex;flex-direction:column;gap:6px}
+.tt .ttrp{display:grid;grid-template-columns:56px 64px minmax(0,2fr) minmax(0,1fr) auto auto;grid-template-areas:"ph nr nm sh tw del";gap:8px;align-items:end;padding:6px 0;border-bottom:1px solid #2a3846}
+.tt .ttrp .ttph{grid-area:ph;align-self:center}.tt .ttrp .ttrnr{grid-area:nr}.tt .ttrp .ttrn{grid-area:nm}.tt .ttrp .ttrs{grid-area:sh}.tt .ttrp .tttw{grid-area:tw}.tt .ttrp .ttdel{grid-area:del}
+.tt .ttrf{display:flex;flex-direction:column;gap:3px;min-width:0}
+.tt .ttrp input[type=number].dup{border-color:#e5484d;color:#ffb3b5}
+.tt .ttph{position:relative;width:52px;height:52px;border-radius:50%;overflow:hidden;background:#0f1720;border:2px solid #33475a;display:grid;place-items:center;cursor:pointer;font-size:.68rem;color:#7f93a5}
+.tt .ttph img{width:100%;height:100%;object-fit:cover;display:block}
+.tt .ttph input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.tt .ttph:hover{border-color:#ffd34d}
+.tt .tttw{font-size:.8rem;color:#c3d0db;padding-bottom:8px}
+.tt .ttwarn{color:#ffb3b5}
+@media (max-width:620px){.tt .ttrp{grid-template-columns:56px 64px minmax(0,1fr) auto;grid-template-areas:"ph nr nm nm" "ph tw sh del"}}
 /* ===== Release Notes ===== */
 .appver{font-size:.72rem;font-weight:700;color:#0f1720;background:#7f93a5;border-radius:6px;padding:2px 6px;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .notesbtn{position:relative}
@@ -236,6 +251,7 @@ const SPZ_ICON_B='<svg viewBox="0 0 34 34" width="34" height="34"><rect x="1" y=
 const SPZ_ICON_C='<svg viewBox="0 0 34 34" width="34" height="34"><rect x="1" y="1" width="32" height="32" rx="7" fill="#2f8f43"/><path d="M3 17 H31" stroke="rgba(255,255,255,.5)" stroke-width="1"/><path d="M12 31 V27 H22 V31 M14 3 V6 H20 V3" fill="none" stroke="#fff" stroke-width="1.2"/><path d="M17 29 Q9 16 18 10" stroke="#ffd34d" stroke-width="1.8" fill="none" stroke-dasharray="3 2"/><circle cx="17" cy="29" r="2" fill="#c8ef4a"/><circle cx="18" cy="10" r="2" fill="#c8ef4a"/><circle cx="11" cy="20" r="1.8" fill="#e5484d"/><circle cx="17" cy="20" r="1.8" fill="#e5484d"/><circle cx="23" cy="20" r="1.8" fill="#e5484d"/><circle cx="17" cy="25" r="1.8" fill="#e5484d"/></svg>';
 
 const TT_EDIT_ICON='<svg viewBox="0 0 34 34" width="34" height="34"><rect x="1" y="1" width="32" height="32" rx="7" fill="#2f8f43"/><rect x="5" y="4" width="24" height="26" rx="1.5" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.1"/><path d="M5 17 H29" stroke="rgba(255,255,255,.6)" stroke-width="1"/><path d="M10 25 L16 19" stroke="#7fd1ff" stroke-width="1.6" stroke-dasharray="2 2"/><circle cx="10" cy="25" r="2.6" fill="#c8ef4a" stroke="#fff" stroke-width="1"/><circle cx="20" cy="10" r="2.4" fill="#e5484d" stroke="#fff" stroke-width="1"/><path d="M19.5 26.5 l7-7 2.5 2.5-7 7-3.2.7z" fill="#ffd34d" stroke="#3a2c00" stroke-width=".8"/></svg>';
+const TT_TEAM_ICON='<svg viewBox="0 0 34 34" width="34" height="34"><rect x="1" y="1" width="32" height="32" rx="7" fill="#2f8f43"/><path d="M10 9 l4-3 h6 l4 3 l3 5 -4 2 -1-2 v13 H12 V14 l-1 2 -4-2z" fill="#c8ef4a" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/><text x="17" y="21.5" text-anchor="middle" font-size="8" font-weight="800" font-family="sans-serif" fill="#16210a">13</text></svg>';
 const TT_IMPORT_ICON='<svg viewBox="0 0 34 34" width="34" height="34"><rect x="1" y="1" width="32" height="32" rx="7" fill="#2f8f43"/><rect x="6" y="5" width="22" height="24" rx="1.5" fill="none" stroke="#fff" stroke-width="1.3"/><path d="M6 17 H28" stroke="#fff" stroke-width="1.1"/><path d="M17 8 V20" stroke="#ffd34d" stroke-width="2.4" stroke-linecap="round"/><path d="M12.5 15.5 L17 20 L21.5 15.5" stroke="#ffd34d" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/><rect x="10" y="23" width="14" height="3" rx="1.5" fill="#ffd34d"/></svg>';
 const TT_PLAY_ICON='<svg viewBox="0 0 34 34" width="34" height="34"><rect x="1" y="1" width="32" height="32" rx="7" fill="#2f8f43"/><rect x="5" y="4" width="24" height="26" rx="1.5" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="1.1"/><path d="M5 17 H29" stroke="rgba(255,255,255,.6)" stroke-width="1"/><path d="M11 25 L22 18" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/><path d="M22 18 L23 9" stroke="#7fd1ff" stroke-width="1.6" stroke-dasharray="2 2"/><circle cx="11" cy="25" r="2.6" fill="#c8ef4a" stroke="#fff" stroke-width="1"/><circle cx="22" cy="18" r="2.6" fill="#c8ef4a" stroke="#fff" stroke-width="1"/><circle cx="16" cy="11" r="2.4" fill="#e5484d" stroke="#fff" stroke-width="1"/></svg>';
 
@@ -277,7 +293,9 @@ const EXERCISES=[
   {id:'tt-editor',tab:'tt',group:'Taktiktafel',title:'Neuer Spielzug',
    short:'Aufstellung, Wege und Schritte zeichnen – wird als Animation abgespielt',icon:TT_EDIT_ICON,mount:mountTTEditor},
   {id:'tt-import',tab:'tt',group:'Taktiktafel',title:'Importieren',
-   short:'Spielzug-Text aus der Taktiktafel einfügen und speichern',icon:TT_IMPORT_ICON,mount:mountTTImport}
+   short:'Spielzug-Text aus der Taktiktafel einfügen und speichern',icon:TT_IMPORT_ICON,mount:mountTTImport},
+  {id:'tt-teams',tab:'tt',group:'Taktiktafel',title:'Mannschaften',
+   short:'Kader mit Foto, Nummer und Namen',icon:TT_TEAM_ICON,mount:mountTTTeams}
 ];
 
 /* ===================== App-Shell ===================== */
@@ -401,9 +419,8 @@ root.innerHTML=`
       <select data-r="sAuto"><option value="1">① Steil auf C</option><option value="2">② Pass auf A</option></select>
     </label>
   </div>
+  ${exOptsHTML()}
   <div class="bar">
-    <label><input type="checkbox" data-r="cText" checked> Text-Overlay</label>
-    <label><input type="checkbox" data-r="cRuns" checked> Laufwege</label>
     <label><input type="checkbox" data-r="cEdit"> Aufstellung bearbeiten (Spieler ziehen)</label>
     <button data-r="bReset">Standard-Aufstellung</button>
   </div>
@@ -464,7 +481,7 @@ const TEND=8.6,DEC=2.4,HOLD=2.75;
 const OPT={1:'Mitnahme nach vorne rechts → Steilpass auf C',2:'Mitnahme nach links → Pass auf den freilaufenden A'};
 
 let T=0,playing=false,last=0,speed=1,chosen=null,mode='manual',autoOpt=1,waiting=false;
-let showText=true,showRuns=true,edit=false,drag=null,raf=0,alive=true;
+let showText=true,showRuns=true,edit=false,drag=null,raf=0,alive=true,showAll=true,showAnn=true;
 const cv=q('cv'),ctx=cv.getContext('2d');
 let S=1,DPR=1,CW=0,CH=0;
 
@@ -532,6 +549,7 @@ function line(p,r,o={}){
   ctx.restore();
 }
 function tag(p,txt,o={}){
+  if(typeof showAnn!=='undefined'&&!showAnn&&!(o&&o.big))return;
   const {c='#fff',bg='rgba(10,16,24,.78)',a=1}=o;
   const fs=clamp(S*.5,10,13);ctx.save();ctx.globalAlpha=clamp(a,0,1);
   ctx.font=`600 ${fs}px system-ui,sans-serif`;const w=ctx.measureText(txt).width+12,h=fs+9;
@@ -547,6 +565,7 @@ function zone(c,a,label){
   if(label&&a>.4)tag({x:c.x,y:c.y+2.2},'freier Raum',{c:'#3a2c00',bg:'rgba(255,230,120,.85)',a});
 }
 function badge(p,n,a){
+  if(!showAnn)return;
   const r=clamp(S*.6,8,12);ctx.save();ctx.globalAlpha=clamp(a,0,1);
   ctx.fillStyle='#ffd34d';ctx.beginPath();ctx.arc(p.x*S,p.y*S,r,0,7);ctx.fill();
   ctx.fillStyle='#111';ctx.font=`800 ${r*1.15}px system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';
@@ -585,6 +604,8 @@ function draw(){
   const s=st(T),now=performance.now()/1000,R=rev();
   const pulse=waiting?.6+.4*Math.sin(now*6):1;
   drawField();
+  if(showAll){const o=s.o;line(s.start,s.recv,{c:'#fff',w:2,a:.22});line(s.recv,o.M,{c:'#ffd34d',w:2,a:.25,curve:.6});
+    line(o.M,s.tgPt,{c:'#fff',w:2,a:.22,head:true});line(P.A,s.A2,{c:'#cfe0ff',w:1.6,a:.25,dash:[3,6],head:true,curve:-1.2});}
   s.opts.forEach((o,i)=>{const n=i+1;let a=T<1.5?.45:T<4.65?.95:.55;
     if(R)a=n===s.oi?1:.22; if(T>=5.75&&n!==s.oi)a=.12; if(waiting)a*=pulse;
     zone(o.zone,a,T>=1.5&&T<5.75&&(!R||n===s.oi));});
@@ -669,8 +690,7 @@ q('rT').oninput=e=>{playing=false;setT(+e.target.value);};
 q('sSpeed').onchange=e=>speed=+e.target.value;
 q('sMode').onchange=e=>{mode=e.target.value;q('lAuto').classList.toggle('hidden',mode!=='auto');restart(false);};
 q('sAuto').onchange=e=>{autoOpt=+e.target.value;if(mode==='auto')chosen=autoOpt;};
-q('cText').onchange=e=>showText=e.target.checked;
-q('cRuns').onchange=e=>showRuns=e.target.checked;
+exOpts(root,['all','runs','text','ann'],o=>{showText=o.text;showRuns=o.runs;showAll=o.all;showAnn=o.ann;});
 q('cEdit').onchange=e=>{edit=e.target.checked;cv.classList.toggle('edit',edit);if(edit)restart(false);};
 q('bReset').onclick=()=>{P=JSON.parse(JSON.stringify(DEF));restart(false);};
 root.querySelectorAll('[data-r="decide"] button').forEach(b=>b.onclick=()=>choose(+b.dataset.opt));
@@ -748,9 +768,8 @@ root.innerHTML=`
     </label>
   </div>
   <input type="range" data-r="rT" min="0" max="9.6" step="0.01" value="0" aria-label="Zeitleiste">
+  ${exOptsHTML()}
   <div class="bar">
-    <label><input type="checkbox" data-r="cText" checked> Text-Overlay</label>
-    <label><input type="checkbox" data-r="cRuns" checked> Gesamtablauf vorab zeigen</label>
     <label><input type="checkbox" data-r="cLeg" checked> Legende</label>
   </div>
   <div class="kbd">Tastatur: Leertaste = Play/Pause · ← → = Schritt · R = Neustart</div>
@@ -844,7 +863,7 @@ const PH=[
 ];
 const TEND=9.6;
 
-let T=0,playing=false,last=0,speed=1,showText=true,showRuns=true,showLeg=true,raf=0,alive=true;
+let T=0,playing=false,last=0,speed=1,showText=true,showRuns=true,showLeg=true,raf=0,alive=true,showOpp=true,showWays=true,showAnn=true;
 const cv=q('cv'),ctx=cv.getContext('2d');
 let K=1,DPR=1,CW=0,CH=0;
 
@@ -939,6 +958,7 @@ function wavy(f,t0,t1,o={}){
   ctx.stroke();ctx.restore();
 }
 function tag(p,txt,o={}){
+  if(typeof showAnn!=='undefined'&&!showAnn&&!(o&&o.big))return;
   const {c='#fff',bg='rgba(10,16,24,.78)',a=1}=o;
   const fs=clamp(K*.5,10,13);ctx.save();ctx.globalAlpha=clamp(a,0,1);
   ctx.font=`600 ${fs}px system-ui,sans-serif`;const w=ctx.measureText(txt).width+12,h=fs+9;
@@ -994,6 +1014,13 @@ function draw(){
     wavy(pD1,0,1,{a});line(s.dEnd,s.mFoot,{a});pathLine(pRun,0,1,{a,dash:[3,6],c:'#dbe7ff'});
     line(s.mFoot,R,{a});wavy(pD2,0,1,{a});line(s.shotStart,GP,{a,c:'#ffd34d'});}
 
+  // Wege der aktuellen und nächsten Aktion
+  if(showWays){const i=phaseIdx(T),w={a:.5};
+    [i,i+1].forEach(j=>{
+      if(j===1)wavy(pD1,0,1,w);else if(j===2)line(s.dEnd,s.mFoot,{a:.5,head:true});
+      else if(j===3)pathLine(pRun,0,1,{c:'#dbe7ff',w:2,dash:[4,6],a:.6,head:true});else if(j===4)line(s.mFoot,R,{a:.5,head:true});
+      else if(j===5)line(R,s.dStart,{c:'#ffd34d',a:.55,head:true,curve:.4});else if(j===6)wavy(pD2,0,1,w);
+      else if(j===7)line(s.shotStart,GP,{c:'#ffd34d',a:.55,head:true});});}
   // tatsächliche Wege
   if(T>=1.0){wavy(pD1,0,s.u1,{a:T>=2.8?.6:1});
     if(T<2.8)tag(add(pD1(.5),{x:3.4,y:0}),'Andribbeln');}
@@ -1015,7 +1042,7 @@ function draw(){
   // Spieler
   QUEUE.forEach(p=>player(p,'',-Math.PI/2,{a:.45}));
   player(M0,'M',s.fM);
-  player(s.tw,'TW',s.fT,{fill:'#7b3fe4',txt:'#fff'});
+  if(showOpp)player(s.tw,'TW',s.fT,{fill:'#7b3fe4',txt:'#fff'});
   player(s.sp,'S',s.fS,{ring:'#ffd34d'});
   drawBall(s.ball);
   if(T>=4.5&&T<5.2)tag(add(s.sp,{x:-.5,y:-2.4}),'👀 Ball im Blick',{c:'#111',bg:'#ffd34d'});
@@ -1052,8 +1079,7 @@ q('bPrev').onclick=()=>{playing=false;const i=phaseIdx(T);const tgt=(T-PH[i].t>.
 q('bNext').onclick=()=>{playing=false;const i=phaseIdx(T);setT(i<PH.length-1?PH[i+1].t+.001:TEND);};
 q('rT').oninput=e=>{playing=false;setT(+e.target.value);};
 q('sSpeed').onchange=e=>speed=+e.target.value;
-q('cText').onchange=e=>showText=e.target.checked;
-q('cRuns').onchange=e=>showRuns=e.target.checked;
+exOpts(root,['opp','all','runs','text','ann'],o=>{showText=o.text;showRuns=o.all;showWays=o.runs;showOpp=o.opp;showAnn=o.ann;});
 q('cLeg').onchange=e=>showLeg=e.target.checked;
 function onKey(e){
   if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT'||e.target.tagName==='BUTTON'&&e.code==='Space')return;
@@ -1166,9 +1192,8 @@ root.innerHTML=`
     </label>
   </div>
   <input type="range" data-r="rT" min="0" max="${cfg.TEND}" step="0.01" value="0" aria-label="Zeitleiste">
+  ${exOptsHTML()}
   <div class="bar">
-    <label><input type="checkbox" data-r="cText" checked> Text-Overlay</label>
-    <label><input type="checkbox" data-r="cRuns" checked> Gesamtablauf vorab zeigen</label>
     <label><input type="checkbox" data-r="cLeg" checked> Legende</label>
   </div>
   <div class="kbd">Tastatur: Leertaste = Play/Pause · ← → = Schritt · R = Neustart</div>
@@ -1240,7 +1265,7 @@ function ballAt(T){
 function holderAt(T){let h=passes[0].f;for(const p of passes)if(T>=p.t1)h=p.to||p.toPt;else if(T>=p.t0)h=null;return h;}
 
 const PH=cfg.ph, TEND=cfg.TEND, COL=cfg.col;
-let T=0,playing=false,last=0,speed=1,showText=true,showRuns=true,showLeg=true,raf=0,alive=true;
+let T=0,playing=false,last=0,speed=1,showText=true,showRuns=true,showLeg=true,raf=0,alive=true,showWays=true,showAnn=true;
 const cv=q('cv'),ctx=cv.getContext('2d');
 let K=1,DPR=1,CW=0,CH=0;
 
@@ -1265,6 +1290,7 @@ function curve(a,b,c,t1,o={}){
   ctx.restore();
 }
 function tag(p,txt,o={}){
+  if(typeof showAnn!=='undefined'&&!showAnn&&!(o&&o.big))return;
   const {c='#fff',bg='rgba(10,16,24,.8)',a=1}=o;
   const fs=clamp(K*.62,10,13);ctx.save();ctx.globalAlpha=clamp(a,0,1);
   ctx.font=`600 ${fs}px system-ui,sans-serif`;const w=ctx.measureText(txt).width+12,h=fs+9;
@@ -1324,6 +1350,9 @@ function draw(){
   if(!CW)return;
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,CW,CH);
   drawField();DUM.forEach(dummy);cone({x:POS.A.x-.9,y:POS.A.y+.6});
+  if(showWays){const i=phaseIdx(T),t0=PH[i].t,t1=(PH[i+2]||{t:TEND+1}).t;
+    passes.forEach(p=>{if(p.t0>=t0-.01&&p.t0<t1&&T<p.t1)line(p.s,p.e,{c:COL,a:.5,w:2,head:true});});
+    runs.forEach(r=>{if(r.t0>=t0-.01&&r.t0<t1&&T<r.t1)curve(r.from,r.to,r.c,1,r.rot?{col:'#f3f6f8',al:.5,w:1.6,dash:[2,5],head:true}:{col:COL,al:.5,w:2,head:true});});}
   if(showRuns){
     passes.forEach(p=>line(p.s,p.e,{c:COL,a:.25,w:2}));
     runs.forEach(r=>curve(r.from,r.to,r.c,1,r.rot?{col:'#f3f6f8',al:.22,w:1.6,dash:[2,5]}:{col:COL,al:.25,w:2}));
@@ -1377,8 +1406,7 @@ q('bPrev').onclick=()=>{playing=false;const i=phaseIdx(T);const tgt=(T-PH[i].t>.
 q('bNext').onclick=()=>{playing=false;const i=phaseIdx(T);setT(i<PH.length-1?PH[i+1].t+.001:TEND);};
 q('rT').oninput=e=>{playing=false;setT(+e.target.value);};
 q('sSpeed').onchange=e=>speed=+e.target.value;
-q('cText').onchange=e=>showText=e.target.checked;
-q('cRuns').onchange=e=>showRuns=e.target.checked;
+exOpts(root,['all','runs','text','ann'],o=>{showText=o.text;showRuns=o.all;showWays=o.runs;showAnn=o.ann;});
 q('cLeg').onchange=e=>showLeg=e.target.checked;
 root.querySelectorAll('.vbtn').forEach(b=>b.onclick=()=>{if(b.dataset.v!==vk&&typeof openExercise==='function')openExercise('passdrill-'+b.dataset.v);});
 function onKey(e){
@@ -1449,9 +1477,8 @@ root.innerHTML=`
     </label>
   </div>
   <input type="range" data-r="rT" min="0" max="18.8" step="0.01" value="0" aria-label="Zeitleiste">
+  ${exOptsHTML()}
   <div class="bar">
-    <label><input type="checkbox" data-r="cText" checked> Text-Overlay</label>
-    <label><input type="checkbox" data-r="cRuns" checked> Gesamtablauf vorab zeigen</label>
     <label><input type="checkbox" data-r="cRot" checked> Positionswechsel zeigen</label>
   </div>
   <div class="kbd">Tastatur: Leertaste = Play/Pause · ← → = Schritt · R = Neustart</div>
@@ -1578,7 +1605,7 @@ function ballAt(id,T){
   return evEnd(ev);
 }
 
-let T=0,playing=false,last=0,speed=1,showText=true,showRuns=true,showRot=true,raf=0,alive=true;
+let T=0,playing=false,last=0,speed=1,showText=true,showRuns=true,showRot=true,raf=0,alive=true,showWays=true,showAnn=true;
 const cv=q('cv'),ctx=cv.getContext('2d');
 let K=1,DPR=1,CW=0,CH=0;
 const curSeq=T=>T>=SEQS[1].t-.2?2:1;
@@ -1603,6 +1630,7 @@ function runLine(r,t1,o={}){
   ctx.restore();
 }
 function tag(p,txt,o={}){
+  if(typeof showAnn!=='undefined'&&!showAnn&&!(o&&o.big))return;
   const {c='#fff',bg='rgba(10,16,24,.8)',a=1}=o;
   const fs=clamp(K*.62,10,13);ctx.save();ctx.globalAlpha=clamp(a,0,1);
   ctx.font=`600 ${fs}px system-ui,sans-serif`;const w=ctx.measureText(txt).width+12,h=fs+9;
@@ -1654,6 +1682,9 @@ function draw(){
   ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,CW,CH);
   drawField();DUM.forEach(dummy);
   const cs=curSeq(T);
+  if(showWays){const i=phaseIdx(T),t0=PH[i].t,t1=(PH[i+2]||{t:TEND+1}).t;
+    passes.forEach(p=>{if(p.t0>=t0-.01&&p.t0<t1&&T<p.t1)line(p.s,p.e,{c:p.shot?'#ffd34d':'#fff',a:.5,w:2,head:true});});
+    runs.forEach(r=>{if(!r.rot&&r.t0>=t0-.01&&r.t0<t1&&T<r.t1)runLine(r,1,{al:.55,w:2,head:true});});}
   if(showRuns){
     passes.filter(p=>p.seq===cs).forEach(p=>line(p.s,p.e,{c:p.shot?'#ffd34d':'#fff',a:.22,w:2}));
     runs.filter(r=>r.seq===cs&&!r.rot).forEach(r=>runLine(r,1,{al:.25,w:2}));
@@ -1713,8 +1744,7 @@ q('bPrev').onclick=()=>{playing=false;const i=phaseIdx(T);const tgt=(T-PH[i].t>.
 q('bNext').onclick=()=>{playing=false;const i=phaseIdx(T);setT(i<PH.length-1?PH[i+1].t+.001:TEND);};
 q('rT').oninput=e=>{playing=false;setT(+e.target.value);};
 q('sSpeed').onchange=e=>speed=+e.target.value;
-q('cText').onchange=e=>showText=e.target.checked;
-q('cRuns').onchange=e=>showRuns=e.target.checked;
+exOpts(root,['all','runs','text','ann'],o=>{showText=o.text;showRuns=o.all;showWays=o.runs;showAnn=o.ann;});
 q('cRot').onchange=e=>showRot=e.target.checked;
 function onKey(e){
   if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT'||e.target.tagName==='BUTTON'&&e.code==='Space')return;
@@ -1786,9 +1816,8 @@ root.innerHTML=`
   <div class="bar">
     <label><input type="checkbox" data-r="cAuto" checked> Auto-Kommando</label>
     <label><input type="checkbox" data-r="cVis" checked> Blickfeld (Kopf hoch)</label>
-    <label><input type="checkbox" data-r="cRuns" checked> Laufwege zum Tor</label>
-    <label><input type="checkbox" data-r="cText" checked> Text</label>
   </div>
+  ${exOptsHTML()}
   <div class="kbd">Tastatur: Leertaste = Play/Pause · 1–4 = Farbe rufen (Rot, Blau, Gelb, Weiß) · R = Neustart</div>
   <details>
     <summary>Übungsbeschreibung</summary>
@@ -1833,7 +1862,7 @@ const angDiff=(a,b)=>{let d=((b-a+Math.PI*3)%(Math.PI*2))-Math.PI;return d;};
 const rnd=(a,b)=>a+Math.random()*(b-a);
 
 let players=[],call=null,simT=0,nextCallAt=3,lastCol=-1,playing=false,last=0,speed=1;
-let auto=true,showVis=true,showRuns=true,showText=true,raf=0,alive=true,started=false;
+let auto=true,showVis=true,showRuns=true,showText=true,raf=0,alive=true,started=false,showAnn=true;
 const cv=q('cv'),ctx=cv.getContext('2d');
 let K=1,DPR=1,CW=0,CH=0;
 
@@ -1896,6 +1925,7 @@ function update(dt){
 /* ---------- Zeichnen ---------- */
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function tag(p,txt,o={}){
+  if(typeof showAnn!=='undefined'&&!showAnn&&!(o&&o.big))return;
   const {c='#fff',bg='rgba(10,16,24,.82)',a=1,big=false}=o;
   const fs=big?clamp(K*1.0,14,22):clamp(K*.6,10,13);ctx.save();ctx.globalAlpha=clamp(a,0,1);
   ctx.font=`${big?800:600} ${fs}px system-ui,sans-serif`;const w=ctx.measureText(txt).width+(big?24:12),h=fs+(big?14:9);
@@ -1954,6 +1984,9 @@ function draw(){
     ctx.save();ctx.strokeStyle=COLORS[call.col].c;ctx.globalAlpha=.85;ctx.lineWidth=2;ctx.setLineDash([4,5]);ctx.lineCap='round';ctx.beginPath();
     p.trail.forEach((t,i)=>i?ctx.lineTo(t.x*K,t.y*K):ctx.moveTo(t.x*K,t.y*K));
     if(p.state!=='free')ctx.lineTo(p.x*K,p.y*K);ctx.stroke();ctx.restore();});
+  if(showRuns&&call)players.forEach(p=>{if(p.state!=='react'&&p.state!=='go')return;
+    ctx.save();ctx.strokeStyle=COLORS[call.col].c;ctx.globalAlpha=.55;ctx.lineWidth=2;ctx.setLineDash([2,5]);ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(p.x*K,p.y*K);ctx.lineTo(p.A.x*K,p.A.y*K);ctx.lineTo(p.E.x*K,p.E.y*K);ctx.stroke();ctx.restore();});
   if(showVis)players.forEach(vision);
   players.forEach(player);players.forEach(ball);
   players.forEach(p=>{if(p.state==='react')tag({x:p.x,y:p.y-1.7},'👀',{bg:'rgba(255,255,255,.85)',c:'#111'});
@@ -1997,8 +2030,7 @@ q('sSpeed').onchange=e=>speed=+e.target.value;
 q('sN').onchange=()=>{init();};
 q('cAuto').onchange=e=>{auto=e.target.checked;if(auto&&!call)nextCallAt=simT+2;};
 q('cVis').onchange=e=>showVis=e.target.checked;
-q('cRuns').onchange=e=>showRuns=e.target.checked;
-q('cText').onchange=e=>showText=e.target.checked;
+exOpts(root,['runs','text','ann'],o=>{showText=o.text;showRuns=o.runs;showAnn=o.ann;});
 function manual(c){if(!started)start();if(!playing)playing=true;callColor(c);}
 root.querySelectorAll('.cbtn').forEach(b=>b.onclick=()=>manual(+b.dataset.c));
 q('bRand').onclick=()=>{let c;do{c=Math.floor(Math.random()*COLORS.length);}while(c===lastCol);manual(c);};
@@ -2068,9 +2100,8 @@ root.innerHTML=`
     </label>
     ${cfg.laneOpt?`<label>Bahnen <select data-r="sLanes"><option value="1">1 Bahn</option><option value="2">2 Bahnen (Wettlauf)</option></select></label>`:''}
   </div>
+  ${exOptsHTML()}
   <div class="bar">
-    <label><input type="checkbox" data-r="cText" checked> Text</label>
-    <label><input type="checkbox" data-r="cCourse" checked> Parcours-Linie</label>
     <label><input type="checkbox" data-r="cFocus" checked> Fokus-Spieler hervorheben</label>
   </div>
   <div class="kbd">Tastatur: Leertaste = Play/Pause · ← → = Schritt · R = Neustart</div>
@@ -2152,7 +2183,7 @@ function posAt(L,i,T){
 function dirAt(L,i,T,fallback){const v=sub(posAt(L,i,T+.08),posAt(L,i,T-.08));return len(v)>.02?norm(v):fallback;}
 
 /* ---------- Zustand ---------- */
-let T=0,playing=false,last=0,speed=1,showText=true,showCourse=true,showFocus=true,raf=0,alive=true;
+let T=0,playing=false,last=0,speed=1,showText=true,showCourse=true,showFocus=true,raf=0,alive=true,showWays=true,showAnn=true;
 const cv=q('cv'),ctx=cv.getContext('2d');
 let K=1,DPR=1,CW=0,CH=0;
 const lastDir={};
@@ -2183,6 +2214,7 @@ function bestTime(){let best=null;
 /* ---------- Zeichnen ---------- */
 function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 function tag(p,txt,o={}){
+  if(typeof showAnn!=='undefined'&&!showAnn&&!(o&&o.big))return;
   const {c='#fff',bg='rgba(10,16,24,.82)',a=1}=o;
   const fs=clamp(K*.55,10,13);ctx.save();ctx.globalAlpha=clamp(a,0,1);
   ctx.font=`600 ${fs}px system-ui,sans-serif`;const w=ctx.measureText(txt).width+12,h=fs+9;
@@ -2231,6 +2263,10 @@ function draw(){
   if(showCourse)lanes.forEach(L=>{pathStroke(L.run,{a:.32,wavy:true});
     if(cfg.shot)pathStroke({S:[pathPos(L.run,L.run.T),L.shotTo]},{col:'#ffd34d',a:.35,dash:[5,6]});
     pathStroke(buildPath(L.backPts.concat([qPos(L,N-1)])),{a:.22,dash:[2,6],w:1.6});});
+  if(showWays){const F0=featured();if(F0&&!F0.r.wait&&F0.r.tau<F0.r.runEnd){const L=lanes[0],tt=F0.r.tau*F0.r.fac;let te=L.run.T;
+    L.run.ph.forEach(p=>{if(p.t>tt+.01&&p.t<te)te=p.t;});const pts=L.run.S.filter(s=>s.t>=tt&&s.t<=te);
+    if(pts.length>1){ctx.save();ctx.strokeStyle='#ffd34d';ctx.globalAlpha=.85;ctx.lineWidth=Math.max(2,K*.12);ctx.setLineDash([6,5]);ctx.lineCap='round';
+      ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(p.x*K,p.y*K):ctx.moveTo(p.x*K,p.y*K));ctx.stroke();ctx.restore();}}}
   const F=featured();
   lanes.forEach(L=>{
     for(let i=0;i<N;i++){
@@ -2292,8 +2328,7 @@ q('bNext').onclick=()=>{playing=false;const F=featured();if(!F){setT(.02);return
 q('sSpeed').onchange=e=>speed=+e.target.value;
 q('sInt').onchange=()=>{setup();setT(0);};
 if(cfg.laneOpt)q('sLanes').onchange=()=>{setup();setT(0);};
-q('cText').onchange=e=>showText=e.target.checked;
-q('cCourse').onchange=e=>showCourse=e.target.checked;
+exOpts(root,['all','runs','text','ann'],o=>{showText=o.text;showCourse=o.all;showWays=o.runs;showAnn=o.ann;});
 q('cFocus').onchange=e=>showFocus=e.target.checked;
 function onKey(e){
   if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT'||e.target.tagName==='BUTTON'&&e.code==='Space')return;
@@ -2582,11 +2617,7 @@ root.innerHTML=`
     </label>
   </div>
   <input type="range" data-r="rT" min="0" max="${V.TEND}" step="0.01" value="0" aria-label="Zeitleiste">
-  <div class="bar">
-    <label><input type="checkbox" data-r="cText" checked> Text</label>
-    <label><input type="checkbox" data-r="cOpp" checked> Gegner zeigen</label>
-    <label><input type="checkbox" data-r="cRuns" checked> Gesamtablauf vorab zeigen</label>
-  </div>
+  ${exOptsHTML()}
   <div class="kbd">Tastatur: Leertaste = Play/Pause · ← → = Schritt · R = Neustart</div>
   <details>
     <summary>Erklärung & Positionen</summary>
@@ -2662,7 +2693,8 @@ function liftAt(T){const p=passes.find(p=>p.lob&&T>=p.t0&&T<p.t1);return p?Math.
 function holderAt(T){let h='TW';for(const ev of events){if(T<ev.t0)break;if(ev.type==='pass')h=T>=ev.t1?ev.to:null;else if(T<=ev.t1||h===ev.w)h=ev.w;}return h;}
 
 const PH=V.ph,TEND=V.TEND;
-let T=0,playing=false,last=0,speed=1,showText=true,showOpp=true,showRuns=true,raf=0,alive=true;
+let T=0,playing=false,last=0,speed=1,showText=true,showOpp=true,showRuns=true,raf=0,alive=true,showWays=true,showAnn=true,showNames=false;
+const SNUM={TW:1,LV:2,IL:3,IR:4,RV:5,Z6:6,Z8:8,S1:9,S2:10},LBLN={TW:'TW',IL:'IL',IR:'IR',LV:'LV',RV:'RV',Z6:'6er',Z8:'8er',S1:'S1',S2:'S2'};
 const cv=q('cv'),ctx=cv.getContext('2d');
 let K=1,DPR=1,CW=0,CH=0;
 
@@ -2683,7 +2715,8 @@ function runLine(r,t1,o={}){const {col='#7fd1ff',w=2,al=1,dash=[5,6],head=false,
   ctx.stroke();ctx.setLineDash([]);
   if(head){const p=runPt(r,t1),p0=runPt(r,Math.max(0,t1-.05));arrowHead(p.x*K,p.y*K,ang(sub(p,p0)),w);}
   ctx.restore();}
-function tag(p,txt,o={}){const {c='#fff',bg='rgba(10,16,24,.82)',a=1}=o;
+function tag(p,txt,o={}){
+  if(typeof showAnn!=='undefined'&&!showAnn&&!(o&&o.big))return;const {c='#fff',bg='rgba(10,16,24,.82)',a=1}=o;
   const fs=clamp(K*.95,10,13);ctx.save();ctx.globalAlpha=clamp(a,0,1);
   ctx.font=`600 ${fs}px system-ui,sans-serif`;const w=ctx.measureText(txt).width+12,h=fs+9;
   const X=clamp(p.x*K-w/2,3,CW-w-3),Y=clamp(p.y*K-h/2,3,CH-h-3);
@@ -2718,6 +2751,9 @@ function drawBall(p,h=0){const X=p.x*K,Y0=p.y*K,r0=clamp(K*.55,4.5,7),r=r0*(1+.6
 function draw(){
   if(!CW)return;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,CW,CH);
   drawField();
+  if(showWays){const i=phaseIdx(T),t0=PH[i].t,t1=(PH[i+2]||{t:TEND+1}).t;
+    passes.forEach(p=>{if(p.t0>=t0-.01&&p.t0<t1&&T<p.t1)line(p.s,p.e,{a:.5,w:2,c:p.shot||p.lob?'#ffd34d':'#fff',dash:p.lob?[7,6]:null,head:true});});
+    runs.forEach(r=>{if(isOpp(r.w)&&!showOpp)return;if(r.t0>=t0-.01&&r.t0<t1&&T<r.t1)runLine(r,1,{al:.5,wavy:!!r.carry,col:r.carry?'#fff':(isOpp(r.w)?'#ff9a9d':'#7fd1ff'),head:!r.carry});});}
   if(showRuns){passes.forEach(p=>line(p.s,p.e,{a:.22,w:2,c:p.shot||p.lob?'#ffd34d':'#fff',dash:p.lob?[7,6]:null}));
     runs.filter(r=>!isOpp(r.w)).forEach(r=>runLine(r,1,{al:.22,wavy:!!r.carry,col:r.carry?'#fff':'#7fd1ff'}));}
   runs.forEach(r=>{if(T<=r.t0)return;const opp=isOpp(r.w);if(opp&&!showOpp)return;const t=ease(seg(T,r.t0,r.t1));
@@ -2733,7 +2769,10 @@ function draw(){
     const p=actorPos(k,T),run=runningAt(k,T);let f=ang(sub(ball,p));
     if(run&&!run.carry&&seg(T,run.t0,run.t1)<.75)f=ang(sub(runPt(run,1),p));if(run&&run.carry)f=ang(sub(runPt(run,Math.min(1,seg(T,run.t0,run.t1)+.1)),p));
     if(len(sub(ball,p))<.3)f=-Math.PI/2;
-    player(p,opp?'':LBL[k],f,opp?{fill:k==='GT'?'#a12d33':'#e5484d',txt:'#fff'}:{ring:hold===k?'#ffd34d':null});});
+    player(p,opp?'':(showNames?LBL[k]:String(SNUM[k]||LBL[k])),f,opp?{fill:k==='GT'?'#a12d33':'#e5484d',txt:'#fff'}:{ring:hold===k?'#ffd34d':null});
+    if(!opp&&!showNames){const X=p.x*K,Y=p.y*K,r=clamp(K*1.15,8,14);ctx.save();ctx.font=`700 ${Math.max(9,r*.75)}px system-ui,sans-serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.6)';ctx.strokeText(LBLN[k],X,Y+r*1.75);
+      ctx.fillStyle='#fff';ctx.fillText(LBLN[k],X,Y+r*1.75);ctx.restore();}});
   drawBall(ball,liftAt(T));
 }
 
@@ -2757,9 +2796,7 @@ q('bPrev').onclick=()=>{playing=false;const i=phaseIdx(T);const tgt=(T-PH[i].t>.
 q('bNext').onclick=()=>{playing=false;const i=phaseIdx(T);setT(i<PH.length-1?PH[i+1].t+.001:TEND);};
 q('rT').oninput=e=>{playing=false;setT(+e.target.value);};
 q('sSpeed').onchange=e=>speed=+e.target.value;
-q('cText').onchange=e=>showText=e.target.checked;
-q('cOpp').onchange=e=>showOpp=e.target.checked;
-q('cRuns').onchange=e=>showRuns=e.target.checked;
+exOpts(root,['opp','all','runs','text','ann','names'],o=>{showText=o.text;showOpp=o.opp;showRuns=o.all;showWays=o.runs;showAnn=o.ann;showNames=o.names;});
 root.querySelectorAll('.vbtn').forEach(b=>b.onclick=()=>{const v=b.dataset.v;if(v!==vk&&SPZ_VARIANTS[v]&&typeof openExercise==='function')openExercise('spielzug-'+v.toLowerCase());});
 function onKey(e){if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT'||e.target.tagName==='BUTTON'&&e.code==='Space')return;
   if(e.code==='Space'){e.preventDefault();q('bPlay').click();}else if(e.key==='ArrowRight')q('bNext').click();
@@ -2949,11 +2986,19 @@ function ttRenderer(ctx){
   };
   R.player=function(p,pos,o={}){
     const Rr=Math.max(9,S*20),X=P(pos.x),Y=P(pos.y),col=o.col||'#c8ef4a';
-    ctx.save();if(o.a!=null)ctx.globalAlpha=o.a;
+    ctx.save();ctx.lineJoin='round';if(o.a!=null)ctx.globalAlpha=o.a;
     ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(X+2,Y+Rr*.72,Rr*.95,Rr*.4,0,0,Math.PI*2);ctx.fill();
     ctx.fillStyle=o.hl?'#ff6b6b':col;ctx.strokeStyle='#fff';ctx.lineWidth=Math.max(1.5,Rr*.12);ctx.beginPath();ctx.arc(X,Y,Rr,0,Math.PI*2);ctx.fill();ctx.stroke();
+    const ph=o.photo&&!o.hl?o.photo:null;
+    if(ph){const pr=Rr*.84;ctx.save();ctx.beginPath();ctx.arc(X,Y,pr,0,Math.PI*2);ctx.clip();ctx.drawImage(ph,X-pr,Y-pr,pr*2,pr*2);ctx.restore();}
     if(o.hold){const lw=Math.max(2.5,Rr*.22);ctx.lineWidth=lw;ctx.strokeStyle='#ffd34d';ctx.beginPath();ctx.arc(X,Y,Rr+lw*.45,0,Math.PI*2);ctx.stroke();}
     if(o.sel){ctx.lineWidth=2;ctx.strokeStyle='#ffd34d';ctx.setLineDash([4,4]);ctx.beginPath();ctx.arc(X,Y,Rr+Math.max(6,Rr*.45),0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);}
+    if(ph){const br=Math.max(6,Rr*.42),bx=X+Rr*.74,by=Y+Rr*.74,nm=String(p.num==null?'':p.num);
+      if(nm!==''){ctx.fillStyle=col;ctx.strokeStyle='#fff';ctx.lineWidth=Math.max(1,br*.16);ctx.beginPath();ctx.arc(bx,by,br,0,Math.PI*2);ctx.fill();ctx.stroke();
+        ctx.fillStyle=ttTxtCol(col);ctx.textAlign='center';ctx.textBaseline='middle';ctx.font=`800 ${br*(nm.length>1?1.05:1.25)}px system-ui,sans-serif`;ctx.fillText(nm,bx,by+br*.06);}
+      if(p.name){ctx.font=`700 ${Math.max(9,Rr*.6)}px system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineWidth=3;ctx.strokeStyle='rgba(0,0,0,.65)';
+        ctx.strokeText(p.name,X,Y+Rr*1.75);ctx.fillStyle='#fff';ctx.fillText(p.name,X,Y+Rr*1.75);}
+      ctx.restore();return;}
     const showName=o.showName&&p.name;const lbl=String(showName?p.name:(p.num!==''&&p.num!=null?p.num:p.name||''));
     ctx.fillStyle=ttTxtCol(col);ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.font=`800 ${Rr*(lbl.length>2?.6:.85)}px system-ui,sans-serif`;ctx.fillText(lbl,X,Y+Rr*.04);
@@ -2982,7 +3027,7 @@ function ttNormalize(d){
   const num=v=>typeof v==='number'?v:parseFloat(v);
   const okP=p=>p&&isFinite(num(p.x))&&isFinite(num(p.y));
   const toPt=b=>b&&isFinite(num(b.x))&&isFinite(num(b.y))?{x:num(b.x),y:num(b.y)}:null;
-  const normP=p=>({id:p.id!=null?p.id:(p.name+'|'+p.team),x:num(p.x),y:num(p.y),name:p.name==null?'':String(p.name),num:p.num==null?'':String(p.num),team:p.team||'home'});
+  const normP=p=>({id:p.id!=null?p.id:(p.name+'|'+p.team),x:num(p.x),y:num(p.y),name:p.name==null?'':String(p.name),num:p.num==null?'':String(p.num),team:p.team||'home',tp:p.tp||undefined});
   const base={age:d.age||'',form:d.form||'',hCol:d.hCol||'#c8ef4a',aCol:d.aCol||'#e5484d',gCol:d.gCol||'#7b3fe4',W:TT_FW,H:TT_FH,
     items:Array.isArray(d.items)?d.items.filter(okP):[]};
   const isV3=Array.isArray(d.frames)&&d.frames.length&&d.frames[0]&&!Array.isArray(d.frames[0])&&Array.isArray(d.frames[0].players);
@@ -3057,8 +3102,8 @@ async function ttRemove(id){
 async function ttInit(){
   let db=null;
   try{if(window.claude&&typeof window.claude.use==='function')db=await window.claude.use('db');}catch(e){db=null;}
-  if(!db){ttLocalLoad();return;}
-  TT.db=db;
+  if(!db){ttLocalLoad();ttTeamsInit();return;}
+  TT.db=db;ttTeamsInit();
   try{db.collection('plays').onSnapshot(s=>{TT.mode='db';
       TT.plays=s.docs.map(x=>Object.assign({id:x.id},x.data()||{})).sort((a,b)=>(a.created||0)-(b.created||0));ttNotify();},
     ()=>{if(TT.mode!=='db')ttLocalLoad();});}catch(e){ttLocalLoad();}
@@ -3216,7 +3261,7 @@ function ttPlayer(host,opts){
     const order=[...all.values()];
     order.filter(p=>p.team==='away').concat(order.filter(p=>p.team!=='away')).forEach(p=>{if(!vis(p))return;
       const pos=posAt(p.id,T);if(!pos)return;const pp=maps[k].get(p.id)||p;
-      R.player(pp,pos,{col:colOf(pp),hold:hold!=null&&p.id===hold,showName:q('cName').checked});});
+      R.player(pp,pos,{col:colOf(pp),hold:hold!=null&&p.id===hold,showName:q('cName').checked,photo:ttPhotoFor(pp)});});
     const b=ballAt(T);if(b)R.ball(b);
   }
   function updateUI(){
@@ -3261,11 +3306,12 @@ function ttPlayer(host,opts){
     if(!D)return;const w=cv.parentElement.clientWidth||400,dpr=window.devicePixelRatio||1;
     const FW=D.W||TT_FW,FH=D.H||TT_FH;cv.style.height=(w*FH/FW)+'px';cv.width=Math.round(w*dpr);cv.height=Math.round(w*FH/FW*dpr);R.setScale(cv.width/FW);updateUI();
   }
+  const onPhoto=()=>{if(D)draw();};TT.photoListeners.push(onPhoto);
   document.addEventListener('keydown',onKey);window.addEventListener('resize',resize);
   let ro=null;try{ro=new ResizeObserver(resize);ro.observe(cv.parentElement);}catch(e){}
   raf=requestAnimationFrame(frame);
   if(opts.data)setData(opts.data);
-  return{setData,resize,destroy(){alive=false;cancelAnimationFrame(raf);document.removeEventListener('keydown',onKey);window.removeEventListener('resize',resize);if(ro)ro.disconnect();}};
+  return{setData,resize,destroy(){TT.photoListeners=TT.photoListeners.filter(f=>f!==onPhoto);alive=false;cancelAnimationFrame(raf);document.removeEventListener('keydown',onKey);window.removeEventListener('resize',resize);if(ro)ro.disconnect();}};
 }
 
 /* ---------- Editor ---------- */
@@ -3314,6 +3360,10 @@ function mountTTEditor(root){
   <div class="ttrow"><span class="ttlbl">Altersklasse</span><div class="ttchips" data-r="ages"></div></div>
   <div class="ttconfirm ttbarc" data-r="ageConfirm" hidden><span data-r="ageConfirmTxt"></span><button data-r="ageYes">Ja, wechseln</button><button data-r="ageNo">Abbrechen</button></div>
   <div class="ttrow"><span class="ttlbl">Formation</span><div class="ttchips" data-r="forms"></div></div>
+  <div class="ttrow"><span class="ttlbl">Mannschaft</span><div class="ttchips">
+    <select data-r="teamSel" class="ttsel ttselsm" aria-label="Mannschaft"></select>
+    <button data-r="bAssign">👕 Aufstellen</button><button data-r="bUnassign">Kader entfernen</button></div></div>
+  <p class="ttnote" data-r="teamMsg"></p>
   <p class="ttnote" data-r="pitchInfo" hidden>Trainingsfläche aus einer Übung: Linien, Tore und Puppen sind übernommen. Material kannst du verschieben, ergänzen oder löschen. „＋ Neu beginnen“ startet wieder auf dem Großfeld.</p>
   <div class="tttools" data-r="tools" role="toolbar" aria-label="Werkzeuge"></div>
   <div class="ttrow" data-r="coneRow" hidden><span class="ttlbl">Hütchenfarbe</span><div class="ttchips" data-r="coneCols"></div></div>
@@ -3382,7 +3432,7 @@ function mountTTEditor(root){
   if(TT.editPid){const doc=TT.plays.find(p=>p.id===TT.editPid);TT.editPid=null;if(doc)loadDoc(doc);}
   if(!E){try{const dr=JSON.parse(store('ttDraft')||'null');if(dr&&ttValidV3(dr.E)){E=dr.E;pid=dr.pid||null;cf=Math.min(dr.cf||0,E.frames.length-1);
       q('name').value=dr.name||'';q('desc').value=dr.desc||'';if(dr.cat)initCat={cat:dr.cat,group:dr.group||''};}}catch(e){}}
-  if(!E)E=ttFresh('U14','4-3-3');
+  if(!E){E=ttFresh('U14','4-3-3');const ts=store('ttTeamSel');if(ts)E.team=ts;}
   E.items=E.items||[];
 
   /* ---- Hilfen ---- */
@@ -3400,7 +3450,7 @@ function mountTTEditor(root){
     q('ages').closest('.ttrow').hidden=!full;q('forms').closest('.ttrow').hidden=!full;q('bTogOpp').hidden=!full;q('bResetForm').hidden=!full;
     q('pitchInfo').hidden=full;
     const sz=FW()+'x'+FH();if(sz!==lastSize){lastSize=sz;if(cv.width)resize();}}
-  function changed(){saveDraft();syncPitch();renderSteps();renderSel();draw();}
+  function changed(){saveDraft();syncPitch();renderTeams();renderSteps();renderSel();draw();}
   function saveDraft(){clearTimeout(draftT);draftT=setTimeout(()=>store('ttDraft',JSON.stringify(Object.assign({E,pid,cf,name:q('name').value,desc:q('desc').value},catF?catF.get():initCat))),300);}
 
   /* ---- Bedienleisten ---- */
@@ -3436,6 +3486,10 @@ function mountTTEditor(root){
           <div><label class="ttfield" for="ttPNum">Nummer</label><input id="ttPNum" type="number" min="1" max="99" value="${ttEsc(p.num)}"></div>
           <div><label class="ttfield" for="ttPTeam">Team</label><select id="ttPTeam"><option value="home">Eigene</option><option value="gk">Torwart</option><option value="away">Gegner</option></select></div>
         </div>
+        ${p.team!=='away'&&team()?`<div class="ttkader"><label class="ttfield" for="ttPKader">Spieler aus Kader ${ttEsc(team().name)}</label>
+          <select id="ttPKader" class="ttsel"><option value="">– kein Kaderspieler –</option>${(team().players||[]).slice().sort(ttByNum).map(k=>{
+            const tp=team().id+'/'+k.id,used=F.players.some(x=>x.tp===tp&&x.id!==p.id);
+            return `<option value="${tp}"${p.tp===tp?' selected':''}>${ttEsc(k.num)} · ${ttEsc(k.short||ttShort(k.name))}${k.tw?' (TW)':''}${used?' – aufgestellt':''}</option>`;}).join('')}</select></div>`:''}
         <div class="bar"><button data-a="give">⚽ Ball zu diesem Spieler</button><button data-a="del" class="ttdelbtn">Aus allen Schritten entfernen</button><button data-a="close">Fertig</button></div>`;
       el.querySelector('#ttPTeam').value=p.team;
       const apply=(fn)=>{push();E.frames.forEach(f=>{const x=findP(f,p.id);if(x)fn(x);});changed();};
@@ -3443,6 +3497,9 @@ function mountTTEditor(root){
       el.querySelector('#ttPNum').onchange=e=>{const v=parseInt(e.target.value,10);if(v>0)apply(x=>x.num=v);};
       el.querySelector('#ttPTeam').onchange=e=>apply(x=>x.team=e.target.value);
       el.querySelector('[data-a="give"]').onclick=()=>{push();F.holder=p.id;F.ball=null;changed();};
+      const kd=el.querySelector('#ttPKader');if(kd)kd.onchange=e=>{const tp=e.target.value,old=p.tp||null;push();
+        const setK=(x,t)=>{if(!t){delete x.tp;return;}const k=ttTeamPlayer(t);if(!k){delete x.tp;return;}x.tp=t;x.name=k.short||ttShort(k.name);x.num=k.num;};
+        E.frames.forEach(f=>{f.players.forEach(x=>{if(tp&&x.tp===tp&&x.id!==p.id)setK(x,old);});const x=findP(f,p.id);if(x)setK(x,tp);});changed();};
       el.querySelector('[data-a="del"]').onclick=()=>{push();E.frames.forEach(f=>{f.players=f.players.filter(x=>x.id!==p.id);if(f.holder===p.id){f.ball=ttFoot(p.team,p);f.holder=null;}});sel=null;changed();};
       el.querySelector('[data-a="close"]').onclick=()=>{sel=null;changed();};
     }else if(sel.kind==='item'){const it=E.items.find(i=>i.id===sel.id);if(!it){sel=null;el.hidden=true;return;}
@@ -3461,6 +3518,23 @@ function mountTTEditor(root){
       el.querySelector('[data-a="close"]').onclick=()=>{sel=null;changed();};
     }
   }
+  const team=()=>TT.teams.find(t=>t.id===E.team)||null;
+  function renderTeams(){const s=q('teamSel');const v=E.team||'';
+    s.innerHTML='<option value="">– keine Mannschaft –</option>'+TT.teams.map(t=>`<option value="${t.id}">${ttEsc(t.name)} · ${(t.players||[]).length} Spieler</option>`).join('');
+    s.value=TT.teams.some(t=>t.id===v)?v:'';q('bAssign').disabled=!team();
+    q('bUnassign').disabled=!E.frames.some(f=>f.players.some(p=>p.tp));
+    if(!TT.teams.length)q('teamMsg').textContent='Noch keine Mannschaft angelegt – unter Taktiktafel › Mannschaften einen Kader anlegen.';}
+  function assignTeam(){const t=team();if(!t)return;push();
+    const F=cur(),own=F.players.filter(p=>p.team!=='away').sort((a,b)=>(a.team==='gk'?-1:0)-(b.team==='gk'?-1:0)||(+a.num||99)-(+b.num||99));
+    const ros=(t.players||[]).slice().sort(ttByNum),tws=ros.filter(k=>k.tw),fps=ros.filter(k=>!k.tw);
+    const map={};own.forEach(p=>{const k=p.team==='gk'?(tws.shift()||fps.shift()):(fps.shift()||tws.shift());if(k)map[p.id]=k;});
+    E.frames.forEach(f=>f.players.forEach(x=>{const k=map[x.id];if(k){x.tp=t.id+'/'+k.id;x.name=k.short||ttShort(k.name);x.num=k.num;}}));
+    const bank=tws.concat(fps);
+    q('teamMsg').textContent=Object.keys(map).length+' Spieler aufgestellt'+(bank.length?' · auf der Bank: '+bank.map(k=>k.short||ttShort(k.name)).join(', '):'')+' – Spieler antippen, um zu tauschen.';
+    store('ttTeamSel',t.id);changed();}
+  q('teamSel').onchange=e=>{push();E.team=e.target.value||null;q('teamMsg').textContent=E.team?'„👕 Aufstellen“ setzt den Kader auf die Positionen.':'';changed();};
+  q('bAssign').onclick=assignTeam;
+  q('bUnassign').onclick=()=>{push();E.frames.forEach(f=>f.players.forEach(x=>{delete x.tp;}));q('teamMsg').textContent='Kader entfernt – Namen und Nummern bleiben stehen.';changed();};
   function setMode(m){mode=m;sel=null;act=null;renderTools();renderSel();draw();}
 
   /* ---- Altersklasse & Formation ---- */
@@ -3584,7 +3658,7 @@ function mountTTEditor(root){
       if(act.type==='zone')R.ann({type:'zone',x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),w:Math.abs(b.x-a.x),h:Math.abs(b.y-a.y)});
       else R.ann({type:act.type,x1:a.x,y1:a.y,x2:b.x,y2:b.y},{a:.8});}
     const own=F.players.filter(p=>p.team!=='away'),opp=F.players.filter(p=>p.team==='away');
-    opp.concat(own).forEach(p=>R.player(p,p,{col:colOf(p),hold:F.holder===p.id,sel:sel&&sel.kind==='player'&&sel.id===p.id,showName:q('cName').checked}));
+    opp.concat(own).forEach(p=>R.player(p,p,{col:colOf(p),hold:F.holder===p.id,sel:sel&&sel.kind==='player'&&sel.id===p.id,showName:q('cName').checked,photo:ttPhotoFor(p)}));
     R.ball(ballPos(F),{sel:sel&&sel.kind==='ball'});
   }
   function resize(){const w=cv.parentElement.clientWidth||400,dpr=window.devicePixelRatio||1;
@@ -3647,15 +3721,15 @@ function mountTTEditor(root){
       sel=null;changed();}
     else if(e.key==='Escape'){act=null;sel=null;changed();}
   }
-  function onList(){q('store').textContent=ttStorageNote();if(catF)catF.refresh();if(pid&&!TT.plays.some(p=>p.id===pid)&&TT.mode!=='init'){pid=null;renderSteps();}}
+  function onList(){q('store').textContent=ttStorageNote();renderTeams();if(catF)catF.refresh();if(pid&&!TT.plays.some(p=>p.id===pid)&&TT.mode!=='init'){pid=null;renderSteps();}}
   document.addEventListener('keydown',onKey);window.addEventListener('resize',resize);
   let ro=null;try{ro=new ResizeObserver(resize);ro.observe(cv.parentElement);}catch(e){}
-  TT.listeners.push(onList);
+  TT.listeners.push(onList);TT.photoListeners.push(draw);
   catF=ttCatFields(q('catHost'),initCat.cat,initCat.group,saveDraft);
   if(TT.dupNote){q('saveMsg').textContent=TT.dupNote;TT.dupNote=null;}
-  renderAges();renderForms();renderTools();renderConeCols();renderCols();syncPitch();renderSteps();renderSel();resize();
+  renderAges();renderForms();renderTools();renderConeCols();renderCols();syncPitch();renderTeams();renderSteps();renderSel();resize();
   return function destroy(){alive=false;clearTimeout(draftT);store('ttDraft',JSON.stringify(Object.assign({E,pid,cf,name:q('name').value,desc:q('desc').value},catF?catF.get():initCat)));
-    TT.listeners=TT.listeners.filter(f=>f!==onList);document.removeEventListener('keydown',onKey);window.removeEventListener('resize',resize);
+    TT.listeners=TT.listeners.filter(f=>f!==onList);TT.photoListeners=TT.photoListeners.filter(f=>f!==draw);document.removeEventListener('keydown',onKey);window.removeEventListener('resize',resize);
     window.removeEventListener('mousemove',mMove);window.removeEventListener('mouseup',mUp);if(ro)ro.disconnect();if(pv)pv.destroy();};
 }
 
@@ -3914,11 +3988,172 @@ function ttAddDupButton(root,ex){
 }
 
 /* =====================================================================
+   EINHEITLICHE ANZEIGE-OPTIONEN für die eingebauten Übungen
+   Gleiche Leiste und gleiche gespeicherte Auswahl („ttOpts“) wie bei
+   den eigenen Übungen. Nicht vorhandene Optionen sind ausgegraut.
+   ===================================================================== */
+const EX_OPTS=[['opp','cOpp','Gegner'],['all','cAll','Gesamtablauf vorab zeigen'],['runs','cRuns','Wege vorab zeigen'],
+  ['text','cText','Text'],['ann','cAnn','Zeichnungen'],['names','cName','Namen statt Nummern']];
+const EX_OPT_TIPS={all:'Alle Wege der ganzen Übung blass im Hintergrund',runs:'Die Wege der aktuellen und der nächsten Aktion',
+  ann:'Beschriftungen und Hinweise im Feld',names:'Positionsnamen statt Rückennummern'};
+function exOptsHTML(){
+  return '<div class="bar exopts" data-r="exopts">'+EX_OPTS.map(([k,,l])=>
+    '<label data-ol="'+k+'"'+(EX_OPT_TIPS[k]?' title="'+EX_OPT_TIPS[k]+'"':'')+'><input type="checkbox" data-o="'+k+'"> '+l+'</label>').join('')+'</div>';
+}
+function exOptsLoad(){let o=null;try{o=JSON.parse(store('ttOpts')||'null');}catch(e){}
+  const st={};EX_OPTS.forEach(([k,c])=>st[k]=o&&typeof o[c]==='boolean'?o[c]:(k!=='names'));return st;}
+function exOpts(root,avail,apply){
+  const st=exOptsLoad();
+  EX_OPTS.forEach(([k,c,l])=>{const inp=root.querySelector('[data-o="'+k+'"]'),lab=root.querySelector('[data-ol="'+k+'"]');if(!inp)return;
+    const on=avail.includes(k);inp.disabled=!on;inp.checked=on&&st[k];
+    if(!on){lab.classList.add('off');lab.title=l+' – in dieser Übung nicht vorhanden';}
+    inp.onchange=()=>{st[k]=inp.checked;let o={};try{o=JSON.parse(store('ttOpts')||'{}')||{};}catch(e){}
+      o[c]=inp.checked;store('ttOpts',JSON.stringify(o));apply(cur());};});
+  const cur=()=>{const r={};EX_OPTS.forEach(([k])=>r[k]=avail.includes(k)&&st[k]);return r;};
+  apply(cur());return cur;
+}
+
+/* =====================================================================
+   MANNSCHAFTEN (Idee 13)
+   Sammlung "teams": {name, age, players:[{id,name,short,num,tw,photo}]}
+   Ein Spieler auf dem Feld verweist mit tp = "<teamId>/<playerId>" auf
+   den Kader; Foto, Name und Nummer kommen von dort.
+   ===================================================================== */
+TT.teams=[];TT.photoListeners=[];
+const TT_IMG=new Map();
+function ttImg(src){
+  if(!src)return null;let im=TT_IMG.get(src);
+  if(!im){im=new Image();im.onload=()=>TT.photoListeners.slice().forEach(f=>{try{f()}catch(e){}});im.src=src;TT_IMG.set(src,im);}
+  return im.complete&&im.naturalWidth?im:null;
+}
+function ttTeamPlayer(tp){
+  if(!tp)return null;const [tid,pid]=String(tp).split('/');const t=TT.teams.find(x=>x.id===tid);
+  return t?(t.players||[]).find(p=>p.id===pid)||null:null;
+}
+function ttPhotoFor(p){const tp=ttTeamPlayer(p&&p.tp);return tp?ttImg(tp.photo):null;}
+function ttShort(name){const s=String(name||'').trim().split(/\s+/);return s.length>1?s[0]+' '+s[s.length-1][0]+'.':(s[0]||'');}
+const ttByNum=(a,b)=>(+a.num||99)-(+b.num||99)||String(a.name).localeCompare(String(b.name));
+
+/* ---------- Speicher ---------- */
+function ttTeamsNotify(){TT.listeners.slice().forEach(f=>{try{f()}catch(e){}});TT.photoListeners.slice().forEach(f=>{try{f()}catch(e){}});}
+async function ttSaveTeam(t){
+  t=Object.assign({},t);const id=t.id||('t'+Date.now().toString(36));delete t.id;t.updated=Date.now();
+  if(TT.mode==='db')await TT.db.collection('teams').doc(id).set(t);
+  else{const i=TT.teams.findIndex(x=>x.id===id),rec=Object.assign({id},t);if(i>=0)TT.teams[i]=rec;else TT.teams.push(rec);
+    store('ttTeams',JSON.stringify(TT.teams));ttTeamsNotify();}
+  return id;
+}
+async function ttRemoveTeam(id){
+  if(TT.mode==='db')await TT.db.collection('teams').doc(id).delete();
+  else{TT.teams=TT.teams.filter(t=>t.id!==id);store('ttTeams',JSON.stringify(TT.teams));ttTeamsNotify();}
+}
+function ttTeamsInit(){
+  if(TT.db){try{TT.db.collection('teams').onSnapshot(s=>{
+      TT.teams=s.docs.map(x=>Object.assign({id:x.id},x.data()||{})).sort((a,b)=>String(a.name).localeCompare(String(b.name)));ttTeamsNotify();},()=>{});return;}catch(e){}}
+  try{TT.teams=JSON.parse(store('ttTeams')||'[]')||[];}catch(e){TT.teams=[];}ttTeamsNotify();
+}
+/* Foto verkleinern (96 × 96, quadratisch zugeschnitten) */
+function ttPhotoFromFile(file){
+  return new Promise((res,rej)=>{const r=new FileReader();r.onerror=()=>rej(new Error('Datei nicht lesbar'));
+    r.onload=()=>{const im=new Image();im.onerror=()=>rej(new Error('Kein Bild'));im.onload=()=>{
+      const s=Math.min(im.width,im.height),c=document.createElement('canvas');c.width=c.height=96;
+      c.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,96,96);res(c.toDataURL('image/jpeg',.82));};im.src=r.result;};
+    r.readAsDataURL(file);});
+}
+
+/* ---------- Ansicht: Mannschaften ---------- */
+function mountTTTeams(root){
+  root.className='pam tt';
+  root.innerHTML=`
+  <h2>Mannschaften</h2>
+  <p class="sub">Kader mit Foto, Nummer und Namen. In der Taktiktafel wählst du die Mannschaft aus und stellst sie mit einem Klick auf.</p>
+  <div class="ttrow"><span class="ttlbl">Mannschaft</span><div class="ttchips" data-r="teams"></div></div>
+  <div data-r="edit"></div>
+  <p class="ttnote">Fotos und Namen sieht nur, wer Zugriff auf diese App hat. Bitte vor dem Teilen das Einverständnis der Eltern beachten.</p>
+  <p class="ttnote" data-r="store"></p>`;
+  const q=n=>root.querySelector('[data-r="'+n+'"]');
+  let curId=store('ttTeamSel')||null,draft=null,dirty=false;
+  function chip(label,on,fn){const b=document.createElement('button');b.className='ttchip'+(on?' on':'');b.textContent=label;b.onclick=fn;return b;}
+  function pick(id){if(dirty&&!confirm2())return;curId=id;store('ttTeamSel',id||'');load();}
+  function confirm2(){return true;}
+  function load(){
+    const t=TT.teams.find(x=>x.id===curId)||TT.teams[0]||null;curId=t?t.id:null;
+    draft=t?ttClone(t):null;dirty=false;render();
+  }
+  function renderChips(){const el=q('teams');el.innerHTML='';
+    TT.teams.forEach(t=>el.appendChild(chip((t.name||'Mannschaft')+' · '+((t.players||[]).length),t.id===curId,()=>pick(t.id))));
+    el.appendChild(chip('＋ Neue Mannschaft',!curId&&!!draft,()=>{curId=null;draft={name:'',age:'U13',players:[]};dirty=true;render();}));}
+  function render(){
+    renderChips();q('store').textContent=ttStorageNote();
+    const el=q('edit');
+    if(!draft){el.innerHTML='<div class="ttempty">Noch keine Mannschaft angelegt. Lege mit „＋ Neue Mannschaft“ die erste an.</div>';return;}
+    draft.players=(draft.players||[]).slice().sort(ttByNum);
+    const nums={};draft.players.forEach(p=>{if(p.num!==''&&p.num!=null)nums[p.num]=(nums[p.num]||0)+1;});
+    el.innerHTML=`<div class="ttform">
+      <div class="ttgrid">
+        <div><label class="ttfield" for="ttTmName">Name der Mannschaft</label><input id="ttTmName" type="text" maxlength="40" value="${ttEsc(draft.name)}" placeholder="z. B. U13"></div>
+        <div><label class="ttfield" for="ttTmAge">Altersklasse</label><select id="ttTmAge" class="ttsel">${Object.keys(TT_AC).map(k=>`<option value="${k}"${k===draft.age?' selected':''}>${ttEsc(TT_AC[k].label)}</option>`).join('')}</select></div>
+      </div>
+      <div class="ttroster">${draft.players.map((p,i)=>`
+        <div class="ttrp" data-i="${i}">
+          <label class="ttph" title="Foto ändern">${p.photo?`<img src="${p.photo}" alt="">`:'<span>Foto</span>'}<input type="file" accept="image/*" data-a="photo"></label>
+          <div class="ttrf ttrnr"><label class="ttfield">Nr.</label><input type="number" min="0" max="99" value="${ttEsc(p.num)}" data-a="num"${nums[p.num]>1?' class="dup" title="Nummer doppelt vergeben"':''}></div>
+          <div class="ttrf ttrn"><label class="ttfield">Name</label><input type="text" maxlength="40" value="${ttEsc(p.name)}" data-a="name"></div>
+          <div class="ttrf ttrs"><label class="ttfield">Kurzname</label><input type="text" maxlength="16" value="${ttEsc(p.short||'')}" placeholder="${ttEsc(ttShort(p.name))}" data-a="short"></div>
+          <label class="tttw"><input type="checkbox" data-a="tw"${p.tw?' checked':''}> TW</label>
+          <button type="button" class="ttdel" data-a="del" title="Spieler entfernen" aria-label="Spieler entfernen">🗑</button>
+        </div>`).join('')}</div>
+      ${Object.values(nums).some(n=>n>1)?'<p class="ttnote ttwarn">Rot markierte Nummern sind doppelt vergeben.</p>':''}
+      <div class="bar"><button data-a="add">＋ Spieler</button></div>
+      <div class="bar"><button class="primary" data-a="save">💾 Mannschaft speichern</button>
+        ${curId?'<button class="ttdelbtn" data-a="delTeam">🗑 Mannschaft löschen</button>':''}<span class="ttnote" data-a="msg"></span></div>
+      <div class="ttconfirm" data-a="conf" hidden>Mannschaft „${ttEsc(draft.name)}“ wirklich löschen? <button data-a="yes">Ja, löschen</button><button data-a="no">Abbrechen</button></div>
+    </div>`;
+    const f=sel=>el.querySelector(sel),msg=t=>{f('[data-a="msg"]').textContent=t;};
+    f('#ttTmName').oninput=e=>{draft.name=e.target.value;dirty=true;};
+    f('#ttTmAge').onchange=e=>{draft.age=e.target.value;dirty=true;};
+    el.querySelectorAll('.ttrp').forEach(row=>{const p=draft.players[+row.dataset.i];
+      row.querySelector('[data-a="num"]').onchange=e=>{p.num=e.target.value===''?'':+e.target.value;dirty=true;render();};
+      row.querySelector('[data-a="name"]').oninput=e=>{p.name=e.target.value;dirty=true;row.querySelector('[data-a="short"]').placeholder=ttShort(p.name);};
+      row.querySelector('[data-a="short"]').oninput=e=>{p.short=e.target.value;dirty=true;};
+      row.querySelector('[data-a="tw"]').onchange=e=>{p.tw=e.target.checked;dirty=true;};
+      row.querySelector('[data-a="del"]').onclick=()=>{draft.players.splice(+row.dataset.i,1);dirty=true;render();};
+      row.querySelector('[data-a="photo"]').onchange=async e=>{const fl=e.target.files&&e.target.files[0];if(!fl)return;
+        try{p.photo=await ttPhotoFromFile(fl);dirty=true;render();}catch(err){msg('Foto konnte nicht geladen werden: '+err.message);}};});
+    f('[data-a="add"]').onclick=()=>{const n=Math.max(0,...draft.players.map(p=>+p.num||0))+1;
+      draft.players.push({id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name:'',short:'',num:n,tw:false,photo:''});dirty=true;render();
+      const rows=el.querySelectorAll('.ttrp');const last=[...rows].find(r=>draft.players[+r.dataset.i].num===n);if(last)last.querySelector('[data-a="name"]').focus();};
+    f('[data-a="save"]').onclick=async()=>{
+      draft.players.forEach(p=>{p.name=String(p.name||'').trim();if(!p.short)p.short='';});
+      const size=JSON.stringify(draft).length;if(size>240000){msg('Zu groß zum Speichern ('+Math.round(size/1000)+' kB). Bitte weniger oder kleinere Fotos.');return;}
+      msg('Speichere …');
+      try{const id=await ttSaveTeam(Object.assign({},draft,{id:curId||undefined,name:(draft.name||'').trim()||'Mannschaft'}));
+        curId=id;store('ttTeamSel',id);dirty=false;msg('Gespeichert.');}
+      catch(e){msg('Speichern fehlgeschlagen: '+((e&&e.message)||e)+'. Du brauchst Bearbeitungsrechte für diese Seite.');}};
+    const dt=f('[data-a="delTeam"]');if(dt){dt.onclick=()=>{f('[data-a="conf"]').hidden=false;};
+      f('[data-a="no"]').onclick=()=>{f('[data-a="conf"]').hidden=true;};
+      f('[data-a="yes"]').onclick=async()=>{try{await ttRemoveTeam(curId);curId=null;draft=null;load();}catch(e){msg('Löschen fehlgeschlagen.');}};}
+  }
+  function onList(){if(!dirty)load();else{renderChips();q('store').textContent=ttStorageNote();}}
+  TT.listeners.push(onList);load();
+  return function destroy(){TT.listeners=TT.listeners.filter(f=>f!==onList);};
+}
+
+/* =====================================================================
    RELEASE NOTES (Kurzform) – Langform im Dokument „Release Notes & Ideen“
    Neue Version: oben in APP_NOTES einfügen, APP_VERSION anpassen.
    ===================================================================== */
-const APP_VERSION='2.6';
+const APP_VERSION='2.8';
 const APP_NOTES=[
+ {v:'2.8',d:'24.10.2026',t:'Mannschaften mit Foto',items:[
+   'Neu unter Taktiktafel › Mannschaften: Kader mit Foto, Nummer und Namen',
+   'Im Editor Mannschaft wählen und mit „👕 Aufstellen“ auf die Positionen setzen',
+   'Spieler antippen, um einen anderen aus dem Kader einzusetzen',
+   'Fotos erscheinen auf dem Feld und in der Animation']},
+ {v:'2.7',d:'20.10.2026',t:'Gleiche Optionen in allen Übungen',items:[
+   'Auch die eingebauten Übungen haben jetzt: Gegner, Gesamtablauf, Wege vorab, Text, Zeichnungen, Namen statt Nummern',
+   'Was eine Übung nicht hat, ist ausgegraut',
+   'Eine Auswahl gilt für alle Übungen und bleibt gespeichert']},
  {v:'2.6',d:'20.10.2026',t:'Mehr Anzeige-Optionen',items:[
    'Eigene und kopierte Übungen: neu „Gesamtablauf vorab zeigen“ und „Text“',
    'Damit überall: Gegner, Gesamtablauf, Wege, Text, Zeichnungen, Namen statt Nummern',
@@ -3995,5 +4230,3 @@ ttInit();
 </script>
 </body>
 </html>
-
-</body></html>
