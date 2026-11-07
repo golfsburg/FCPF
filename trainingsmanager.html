@@ -4251,8 +4251,11 @@ function mountTTTeams(root){
    RELEASE NOTES (Kurzform) – Langform im Dokument „Release Notes & Ideen“
    Neue Version: oben in APP_NOTES einfügen, APP_VERSION anpassen.
    ===================================================================== */
-const APP_VERSION='3.4';
+const APP_VERSION='3.5';
 const APP_NOTES=[
+ {v:'3.5',d:'07.11.2026',t:'RIEMER Toolbox',items:[
+   'Auch in der RIEMER Toolbox verfügbar (tools.riemer.co/trainingsmanager) – mit Lizenzschlüssel',
+   'Dort führt „‹ Toolbox“ zurück zur Toolbox-Startseite']},
  {v:'3.4',d:'07.11.2026',t:'Richtungswechsel: Karten und Ton',items:[
    'Farbkarten sind jetzt immer sichtbar (auch wenn „Zeichnungen“ aus ist), größer und mit Farbe im Textfeld',
    '🔊 Ton: Ansagen werden vorgelesen („Links“, „Vor“ …), bei Karten und Vormachen ertönt ein Pfiff',
@@ -4348,6 +4351,11 @@ const APP_NOTES=[
   document.addEventListener('keydown',e=>{if(!ov.hidden&&e.key==='Escape'){e.stopPropagation();close();}},true);
 })();
 
+
+/* Zurück-Link: in der RIEMER Toolbox (tools.riemer.co) zur Toolbox, sonst zur FCPF-Übersicht */
+(function(){try{if(!(/riemer/i.test(location.hostname)||/riemer-toolbox/i.test(location.pathname)))return;
+  const a=document.querySelector('.appbar .back');if(a){a.href='../';a.title='Zurück zur RIEMER Toolbox';const s=a.querySelector('span');if(s)s.textContent='Toolbox';}
+  document.querySelectorAll('.foot a').forEach(x=>{x.href='../';x.textContent='RIEMER Toolbox';});}catch(e){}})();
 
 /* =====================================================================
    BEWEGUNG – Mobilisation, Kräftigung, Dehnen
