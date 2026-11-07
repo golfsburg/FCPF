@@ -240,6 +240,7 @@ main{max-width:1000px;margin:0 auto;padding:14px 16px 40px}
 .pam .mvstage canvas:active{cursor:grabbing}
 .mvhint{position:absolute;left:10px;top:10px;font:600 11.5px/1 system-ui,sans-serif;color:#f1f4f6;background:rgba(10,16,24,.6);padding:6px 8px;border-radius:6px;pointer-events:none;transition:opacity .4s}
 .mvhint.gone{opacity:0}
+.pam .rwstage{max-width:780px;margin:0 auto}
 
 /* ===== FCPF-Layout ===== */
 html,body{height:auto;min-height:100%}
@@ -4249,8 +4250,13 @@ function mountTTTeams(root){
    RELEASE NOTES (Kurzform) – Langform im Dokument „Release Notes & Ideen“
    Neue Version: oben in APP_NOTES einfügen, APP_VERSION anpassen.
    ===================================================================== */
-const APP_VERSION='3.2';
+const APP_VERSION='3.3';
 const APP_NOTES=[
+ {v:'3.3',d:'07.11.2026',t:'Neue Übung: Richtungswechsel auf Signal',items:[
+   'Dribbling › Ballführen: alle mit Ball auf einer Linie, der Trainer gibt die Richtung vor',
+   'Vier Varianten: Ansage, Nachmachen (spiegelverkehrt), farbige Karten, zwei Signale (Karte hat Vorrang)',
+   'Einstellbar: im Gehen oder Laufen, 4 oder 8 Richtungen, 1 bis 3 Reihen',
+   'Mit der Sohle nach hinten: Spieler bleiben mit Blick zum Trainer']},
  {v:'3.2',d:'07.11.2026',t:'Hüftmobilisation: Übung 04 und 05',items:[
    '04: Beine abwechselnd anheben, Hände nach vorne drücken, Oberkörper anheben',
    '05: Ball in der Mittelposition zwischen Händen und Füßen übergeben, dann durchstrecken',
@@ -4650,6 +4656,247 @@ function mountMobiRuecken(root){
   root._sim={setT:t=>{T=t},get T(){return T},poseAt,plan:()=>plan,setView:v=>{view=v;fit();}};
   return function destroy(){alive=false;cancelAnimationFrame(raf);document.removeEventListener('keydown',onKey);
     window.removeEventListener('resize',resize);if(ro)ro.disconnect();};
+}
+
+/* =====================================================================
+   DRIBBLING: Richtungswechsel auf Signal
+   Alle Spieler mit Ball auf einer Linie, der Trainer steht vor der Gruppe
+   und gibt Signale: Ansage, Vormachen, farbige Karten, zwei Signale.
+   ===================================================================== */
+const DIRCHG_ICON='<svg viewBox="0 0 34 34" width="34" height="34"><rect x="1" y="1" width="32" height="32" rx="7" fill="#2f8f43"/>'
+ +'<g stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none"><path d="M17 12 V5 M17 5 l-2.6 2.6 M17 5 l2.6 2.6"/><path d="M12 17 H5 M5 17 l2.6 -2.6 M5 17 l2.6 2.6"/><path d="M22 17 H29 M29 17 l-2.6 -2.6 M29 17 l-2.6 2.6"/></g>'
+ +'<path d="M17 22 V29 M17 29 l-2.6 -2.6 M17 29 l2.6 -2.6" stroke="#ffd34d" stroke-width="2.2" stroke-linecap="round" fill="none"/>'
+ +'<circle cx="17" cy="17" r="3.6" fill="#c8ef4a" stroke="#fff" stroke-width="1.3"/>'
+ +'<rect x="24" y="4" width="5" height="7" rx="1" fill="#e5484d" stroke="#fff" stroke-width=".8"/></svg>';
+
+(function(){const i=EXERCISES.findIndex(e=>e.id==='stationen');
+  EXERCISES.splice(i+1,0,{id:'richtungswechsel',tab:'dribb',group:'Ballführen',title:'Richtungswechsel auf Signal',
+    short:'Alle mit Ball auf einer Linie – Ansage, Vormachen oder Farbkarte gibt die Richtung vor',icon:DIRCHG_ICON,mount:mountRichtungswechsel});})();
+
+/* Richtungen aus Sicht der Spieler. Die Spieler schauen zum Trainer (nach
+   unten im Bild): „links“ ist für sie im Bild rechts.                     */
+const RW_DIRS={
+  vor:{v:{x:0,y:1},l:'nach vorne',s:'Vor!'},links:{v:{x:1,y:0},l:'nach links',s:'Links!'},
+  rechts:{v:{x:-1,y:0},l:'nach rechts',s:'Rechts!'},zurueck:{v:{x:0,y:-1},l:'mit der Sohle nach hinten',s:'Zurück!',sole:true},
+  vl:{v:{x:.7071,y:.7071},l:'schräg vorne links',s:'Vorne links!'},vr:{v:{x:-.7071,y:.7071},l:'schräg vorne rechts',s:'Vorne rechts!'},
+  hl:{v:{x:.7071,y:-.7071},l:'schräg hinten links',s:'Hinten links!',sole:true},hr:{v:{x:-.7071,y:-.7071},l:'schräg hinten rechts',s:'Hinten rechts!',sole:true}};
+const RW_CARDS={vor:{c:'#e5484d',n:'Rot'},links:{c:'#f5c518',n:'Gelb'},rechts:{c:'#2fa84f',n:'Grün'},zurueck:{c:'#2f6bff',n:'Blau'}};
+const RW_VARS=[
+  {key:'ansage',label:'Ansage',title:'Ansage: der Trainer ruft die Richtung',
+   text:'Der Trainer ruft die Richtung („Links!“, „Vor!“ …). Alle dribbeln sofort in diese Richtung – links und rechts aus Sicht der Spieler.'},
+  {key:'vormachen',label:'Nachmachen',title:'Nachmachen: der Trainer macht es vor',
+   text:'Der Trainer dribbelt selbst eine Richtung vor, die Spieler machen es nach – spiegelverkehrt wie im Spiegel: geht der Trainer zu seiner Linken, gehen die Spieler zu ihrer Rechten.'},
+  {key:'karten',label:'Farbige Karten',title:'Farbige Karten: optisches Signal',
+   text:'Der Trainer hebt eine Karte: Rot = nach vorne, Gelb = nach links, Grün = nach rechts, Blau = mit der Sohle nach hinten. Kopf hoch – sonst sieht man die Karte nicht.'},
+  {key:'zwei',label:'Zwei Signale',title:'Zwei Signale gleichzeitig',
+   text:'Der Trainer ruft eine Richtung und zeigt gleichzeitig eine Karte mit einer anderen Richtung. Das optische Signal hat immer Vorrang – die Spieler folgen der Karte.'}];
+
+function mountRichtungswechsel(root){
+  root.className='pam rw';
+  root.innerHTML=`
+  <h2>Richtungswechsel auf Signal</h2>
+  <p class="sub">Alle Spieler stehen mit Ball am Fuß auf einer Linie, der Trainer steht vor der Gruppe. Auf sein Signal dribbeln alle blitzschnell in die neue Richtung – Ball sicher am Fuß, Blick zum Trainer.</p>
+  <div class="stage rwstage"><canvas data-r="cv"></canvas></div>
+  <div class="ov below" data-r="ov">
+    <div class="ovStep" data-r="ovStep"></div>
+    <div class="ovTitle" data-r="ovTitle"></div>
+    <div class="ovText" data-r="ovText"></div>
+  </div>
+  <div class="steps" data-r="steps"></div>
+  <div class="bar">
+    <button data-r="bRestart">⟲ Neu</button>
+    <button data-r="bPrev">◀ Signal</button>
+    <button data-r="bPlay" class="primary">▶ Abspielen</button>
+    <button data-r="bNext">Signal ▶</button>
+    <label>Tempo
+      <select data-r="sSpeed"><option value="0.5">0,5×</option><option value="1" selected>1×</option><option value="1.5">1,5×</option><option value="2">2×</option></select>
+    </label>
+  </div>
+  <div class="bar">
+    <label>Bewegung <select data-r="sGait"><option value="gehen">im Gehen (Anfang)</option><option value="laufen">im Laufen</option></select></label>
+    <label>Richtungen <select data-r="sDirs"><option value="4">4 Richtungen</option><option value="8">8 (mit diagonal)</option></select></label>
+    <label>Reihen <select data-r="sRows"><option value="1">1 Reihe</option><option value="2">2 Reihen</option><option value="3">3 Reihen</option></select></label>
+  </div>
+  ${exOptsHTML()}
+  <div class="kbd">Tastatur: Leertaste = Play/Pause · ← → = Signal · R = Neustart</div>
+  <details><summary>Übungsbeschreibung</summary>
+    <h3>Organisation</h3><ul><li>Alle Spieler stehen mit Ball am Fuß auf einer Linie, je ca. 3 m Abstand</li><li>Bei größeren Gruppen 2 bis 3 Reihen hintereinander bilden – alle Spieler brauchen Sichtkontakt zum Trainer vor der Gruppe</li></ul>
+    <h3>Ablauf</h3><ul><li>Der Trainer gibt Anweisungen, wohin sich die Spieler mit dem Ball bewegen sollen: durch Vormachen, Ansagen oder Anzeigen (Karten)</li><li>Anfangs nur 4 Richtungen, später auch 8 (plus diagonale Bewegungen)</li><li>Anfangs mit sehr langsamem Tempo (im Gehen), später das Tempo erhöhen (Laufen)</li></ul>
+    <h3>Steuerung</h3><ul><li>Die Bewegungsrichtung des Trainers muss nicht mit der der Spieler übereinstimmen – also auch spiegelverkehrt agieren</li><li>Die Ansagen variieren, z. B. die Richtungen durch Zahlen, Farben, Städte, Himmelsrichtungen, Länder oder Gegenstände ersetzen</li><li>Zwei unterschiedliche Signale gleichzeitig geben: Die eine Richtung ansagen, die andere anzeigen/vormachen. Dabei hat das optische Signal immer Vorrang</li></ul>
+    <h3>Farbkarten</h3><ul><li><b style="color:#e5484d">Rot</b> = nach vorne</li><li><b style="color:#c9a000">Gelb</b> = nach links</li><li><b style="color:#2fa84f">Grün</b> = nach rechts</li><li><b style="color:#2f6bff">Blau</b> = mit der Sohle nach hinten</li></ul>
+    <h3>Tipp</h3><ul><li>Der Trainer muss unterbrechen, wenn Kollisionen der Spieler drohen: Abstände verändern, Tempo reduzieren</li></ul>
+    <h3>Ziele</h3><ul><li>Schnelles Umsetzen unterschiedlichster verbaler, optischer und akustischer Signale (rechte und linke, vordere und hintere Hälfte)</li><li>Blitzschnelle Richtungsänderungen</li><li>Schnelle und sichere Ballführung ohne Blick auf den Ball</li></ul>
+  </details>`;
+  const q=n=>root.querySelector('[data-r="'+n+'"]'),cv=q('cv'),ctx=cv.getContext('2d');
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,t)=>a+(b-a)*t;
+  const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+  const W=30,H=24,NPL=7,LINE_Y=12.6,TR={x:15,y:20.6},STEP=2.6,NSIG=8;
+  let CW=0,CH=0,K=1,DPR=1,T=0,playing=false,speed=1,alive=true,raf=0,last=0;
+  let showText=true,showAll=true,showWays=true,showAnn=true;
+  let gait=store('rwGait')||'gehen',ndirs=+(store('rwDirs')||4),rows=+(store('rwRows')||1);
+  q('sGait').value=gait;q('sDirs').value=String(ndirs);q('sRows').value=String(rows);
+  /* ---------- Ablauf berechnen ---------- */
+  function rng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+  let plan=[];
+  function build(){
+    plan=[];let t=.8,off={x:0,y:0};
+    const v=gait==='laufen'?3.1:1.35,mv=STEP/v,react=gait==='laufen'?.45:.7,hold=gait==='laufen'?.9:1.1;
+    RW_VARS.forEach((V,vi)=>{
+      const R=rng(17+vi*31+ndirs*7+rows),cmds=[];let prev='';
+      const pool=V.key==='karten'||V.key==='zwei'||ndirs===4?['vor','links','rechts','zurueck']:Object.keys(RW_DIRS);
+      for(let i=0;i<NSIG;i++){
+        // Richtung so wählen, dass die Gruppe im Feld bleibt und nicht zweimal dasselbe kommt
+        let opts=pool.filter(k=>{const d=RW_DIRS[k].v,nx=off.x+d.x*STEP,ny=off.y+d.y*STEP;return k!==prev&&Math.abs(nx)<=3.2&&ny<=2.8&&ny>=-2.8;});
+        if(i===NSIG-1||i===NSIG-2){const back=opts.filter(k=>{const d=RW_DIRS[k].v;return Math.hypot(off.x+d.x*STEP,off.y+d.y*STEP)<Math.hypot(off.x,off.y);});if(back.length)opts=back;}
+        const k=opts[Math.floor(R()*opts.length)]||pool[0];prev=k;
+        let say=null;if(V.key==='zwei'){const o=pool.filter(x=>x!==k);say=o[Math.floor(R()*o.length)];}
+        const from={x:off.x,y:off.y},d=RW_DIRS[k].v;off={x:off.x+d.x*STEP,y:off.y+d.y*STEP};
+        cmds.push({v:vi,i,k,say,t0:t,t1:t+react,t2:t+react+mv,t3:t+react+mv+hold,from,to:{x:off.x,y:off.y}});
+        t+=react+mv+hold;
+      }
+      // zurück in die Grundaufstellung
+      if(Math.hypot(off.x,off.y)>.05){cmds.push({v:vi,i:-1,k:null,t0:t,t1:t+.2,t2:t+.2+Math.hypot(off.x,off.y)/1.6,t3:t+.4+Math.hypot(off.x,off.y)/1.6,from:{x:off.x,y:off.y},to:{x:0,y:0},reset:true});
+        t=cmds[cmds.length-1].t3;off={x:0,y:0};}
+      plan.push({v:vi,s:cmds[0].t0,e:t,cmds});t+=1.2;
+    });
+    plan.end=t;
+  }
+  build();
+  const allCmds=()=>plan.flatMap(p=>p.cmds);
+  function cmdAt(t){let c=null;for(const p of plan)for(const x of p.cmds)if(t>=x.t0)c=x;return c;}
+  function varAt(t){let v=0;plan.forEach(p=>{if(t>=p.s-1.2)v=p.v;});return v;}
+  /* Gruppen-Versatz und Blickrichtung zur Zeit t; jeder Spieler reagiert minimal anders */
+  function groupAt(t,delay){
+    const c=cmdAt(t-delay);if(!c)return{off:{x:0,y:0},face:Math.PI/2,moving:false};
+    const d=c.k?RW_DIRS[c.k]:null;
+    if(t-delay<c.t1)return{off:c.from,face:Math.PI/2,moving:false,c};
+    const u=clamp((t-delay-c.t1)/(c.t2-c.t1),0,1),e=ease(u);
+    const off={x:lerp(c.from.x,c.to.x,e),y:lerp(c.from.y,c.to.y,e)};
+    let face=Math.PI/2;
+    if(u<1&&!c.reset&&d&&!d.sole)face=Math.atan2(d.v.y,d.v.x);
+    else if(u<1&&c.reset){const v={x:c.to.x-c.from.x,y:c.to.y-c.from.y};face=Math.atan2(v.y,v.x);}
+    return{off,face,moving:u<1,c,u};
+  }
+  function players(){const L=[];const dx=3,x0=W/2-dx*(NPL-1)/2;
+    for(let r=0;r<rows;r++)for(let i=0;i<NPL;i++){const n=r*NPL+i;
+      L.push({n:n+1,home:{x:x0+i*dx+(r%2?dx/2:0)*(r?1:0),y:LINE_Y-r*2.6},delay:((n*37)%11)/11*.28});}
+    return L;}
+  /* ---------- Zeichnen ---------- */
+  function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+  function field(){
+    ctx.fillStyle='#2a7d3b';ctx.fillRect(0,0,CW,CH);
+    for(let i=0;i<12;i++){ctx.fillStyle=i%2?'#2f8f43':'#349a49';ctx.fillRect(0,i*CH/12,CW,CH/12+1);}
+    ctx.strokeStyle='rgba(255,255,255,.75)';ctx.lineWidth=2;
+    ctx.strokeRect(8*K,0,14*K,4.6*K);ctx.beginPath();ctx.moveTo(0,1);ctx.lineTo(CW,1);ctx.stroke();
+    // Tor
+    const gx1=11.35*K,gx2=18.65*K,gy=.1*K;ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(gx1,gy,gx2-gx1,1.1*K);
+    ctx.strokeStyle='rgba(255,255,255,.3)';ctx.lineWidth=1;for(let x=11.6;x<18.65;x+=.45){ctx.beginPath();ctx.moveTo(x*K,gy);ctx.lineTo(x*K,gy+1.1*K);ctx.stroke();}
+    ctx.strokeStyle='#fff';ctx.lineWidth=3.5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(gx1,gy+1.15*K);ctx.lineTo(gx1,gy);ctx.lineTo(gx2,gy);ctx.lineTo(gx2,gy+1.15*K);ctx.stroke();ctx.lineCap='butt';
+  }
+  function cone(x,y,col){const X=x*K,Y=y*K,r=clamp(K*.3,3.5,6);ctx.fillStyle=col;ctx.beginPath();ctx.moveTo(X,Y-r);ctx.lineTo(X+r*.9,Y+r*.65);ctx.lineTo(X-r*.9,Y+r*.65);ctx.closePath();ctx.fill();}
+  function person(p,lbl,face,fill,ring){const X=p.x*K,Y=p.y*K,r=clamp(K*.55,7,13);
+    ctx.save();ctx.fillStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.ellipse(X+2,Y+3,r,r*.85,0,0,7);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(X+Math.cos(face)*(r+6),Y+Math.sin(face)*(r+6));
+    ctx.lineTo(X+Math.cos(face+.55)*r*.9,Y+Math.sin(face+.55)*r*.9);ctx.lineTo(X+Math.cos(face-.55)*r*.9,Y+Math.sin(face-.55)*r*.9);ctx.closePath();ctx.fill();
+    ctx.fillStyle=fill;ctx.beginPath();ctx.arc(X,Y,r,0,7);ctx.fill();ctx.lineWidth=ring?3:2;ctx.strokeStyle=ring||'#fff';ctx.stroke();
+    ctx.fillStyle='#16210a';ctx.font=`800 ${r*(lbl.length>1?.78:1)}px system-ui,sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(lbl,X,Y+1);ctx.restore();}
+  function ball(p){const X=p.x*K,Y=p.y*K,r=clamp(K*.26,3.5,6.5);ctx.fillStyle='rgba(0,0,0,.35)';ctx.beginPath();ctx.ellipse(X+1.5,Y+2,r,r*.8,0,0,7);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(X,Y,r,0,7);ctx.fill();ctx.lineWidth=1.2;ctx.strokeStyle='#111';ctx.stroke();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(X,Y,r*.38,0,7);ctx.fill();}
+  function arrow(a,b,col,w,dash){ctx.save();ctx.strokeStyle=col;ctx.fillStyle=col;ctx.lineWidth=w;ctx.lineCap='round';if(dash)ctx.setLineDash(dash);
+    ctx.beginPath();ctx.moveTo(a.x*K,a.y*K);ctx.lineTo(b.x*K,b.y*K);ctx.stroke();ctx.setLineDash([]);
+    const an=Math.atan2(b.y-a.y,b.x-a.x),L=Math.max(7,w*3.4);ctx.beginPath();ctx.moveTo(b.x*K,b.y*K);
+    ctx.lineTo(b.x*K-L*Math.cos(an-.45),b.y*K-L*Math.sin(an-.45));ctx.lineTo(b.x*K-L*Math.cos(an+.45),b.y*K-L*Math.sin(an+.45));ctx.closePath();ctx.fill();ctx.restore();}
+  function bubble(p,txt,col){const fs=clamp(K*.62,12,17);ctx.save();ctx.font=`800 ${fs}px system-ui,sans-serif`;
+    const w=ctx.measureText(txt).width+18,h=fs+12,X=clamp(p.x*K-w/2,4,CW-w-4),Y=p.y*K-h;
+    ctx.fillStyle='#fff';rr(X,Y,w,h,h/2);ctx.fill();ctx.beginPath();ctx.moveTo(p.x*K-6,Y+h-1);ctx.lineTo(p.x*K+2,Y+h+8);ctx.lineTo(p.x*K+6,Y+h-1);ctx.fill();
+    ctx.strokeStyle=col||'rgba(0,0,0,.2)';ctx.lineWidth=col?2.5:1;rr(X,Y,w,h,h/2);ctx.stroke();
+    ctx.fillStyle='#111';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,X+w/2,Y+h/2+1);ctx.restore();}
+  function card(p,col,up){const w=clamp(K*.95,13,24),h=w*1.35,X=p.x*K,Y=p.y*K-h*(.4+up*.5);
+    ctx.save();ctx.translate(X,Y);ctx.rotate(-.12);ctx.fillStyle='rgba(0,0,0,.3)';rr(-w/2+2,-h/2+3,w,h,3);ctx.fill();
+    ctx.fillStyle=col;rr(-w/2,-h/2,w,h,3);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.restore();
+    ctx.strokeStyle='#e7b08a';ctx.lineWidth=clamp(K*.22,3,5);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(X-4,p.y*K-4);ctx.lineTo(X,Y+h/2-2);ctx.stroke();}
+  function tag(x,y,txt,bg){const fs=clamp(K*.45,10,13);ctx.save();ctx.font=`600 ${fs}px system-ui,sans-serif`;const w=ctx.measureText(txt).width+12,h=fs+9;
+    const X=clamp(x*K-w/2,3,CW-w-3),Y=clamp(y*K-h/2,3,CH-h-3);ctx.fillStyle=bg||'rgba(10,16,24,.72)';rr(X,Y,w,h,h/2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,X+w/2,Y+h/2+.5);ctx.restore();}
+  function legend(){const items=Object.keys(RW_CARDS);const fs=clamp(K*.42,10,12.5);ctx.save();ctx.font=`600 ${fs}px system-ui,sans-serif`;
+    const lw=Math.max(...items.map(k=>ctx.measureText(RW_DIRS[k].l.replace('mit der Sohle ','Sohle ')).width))+34,lh=fs+8,X=CW-lw-8,Y=CH-lh*items.length-14;
+    ctx.fillStyle='rgba(10,16,24,.72)';rr(X-6,Y-6,lw+12,lh*items.length+12,8);ctx.fill();
+    items.forEach((k,i)=>{ctx.fillStyle=RW_CARDS[k].c;rr(X+2,Y+i*lh+2,12,lh-6,2);ctx.fill();ctx.fillStyle='#fff';ctx.textBaseline='middle';
+      ctx.fillText(RW_DIRS[k].l.replace('mit der Sohle ','Sohle '),X+22,Y+i*lh+lh/2-1);});ctx.restore();}
+  function draw(){
+    if(!CW)return;ctx.setTransform(DPR,0,0,DPR,0,0);field();
+    const PL=players(),vi=varAt(T),V=RW_VARS[vi],c=cmdAt(T);
+    PL.forEach(p=>{const X=p.home.x*K,Y=p.home.y*K,r=clamp(K*.28,3,6);ctx.fillStyle='rgba(255,211,77,.55)';ctx.beginPath();ctx.ellipse(X,Y,r*1.4,r,0,0,7);ctx.fill();ctx.fillStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.ellipse(X,Y,r*.5,r*.35,0,0,7);ctx.fill();});
+    // Gesamtablauf: Weg von Spieler 1 in dieser Variante
+    if(showAll){const pv=plan[vi],p0=PL[Math.floor(NPL/2)];ctx.save();ctx.strokeStyle='rgba(255,255,255,.28)';ctx.lineWidth=2;ctx.setLineDash([3,5]);ctx.beginPath();
+      ctx.moveTo(p0.home.x*K,p0.home.y*K);pv.cmds.forEach(x=>ctx.lineTo((p0.home.x+x.to.x)*K,(p0.home.y+x.to.y)*K));ctx.stroke();ctx.restore();}
+    // Wege: aktuelle Richtung für alle
+    if(showWays&&c&&c.k&&T<c.t3){const d=RW_DIRS[c.k];PL.forEach(p=>{const a={x:p.home.x+c.from.x,y:p.home.y+c.from.y},b={x:p.home.x+c.to.x,y:p.home.y+c.to.y};
+      arrow(a,b,d.sole?'rgba(140,200,255,.9)':'rgba(255,211,77,.92)',Math.max(2,K*.13),[6,5]);});}
+    PL.forEach(p=>{const g=groupAt(T,p.delay),pos={x:p.home.x+g.off.x,y:p.home.y+g.off.y};
+      const d=g.c&&g.c.k?RW_DIRS[g.c.k]:null,sole=g.moving&&d&&d.sole;
+      const bf=sole?.42:.62,bp={x:pos.x+Math.cos(g.face)*bf,y:pos.y+Math.sin(g.face)*bf};
+      if(g.moving&&!sole){const wob=Math.sin(T*9+p.n)*.12;bp.x+=-Math.sin(g.face)*wob;bp.y+=Math.cos(g.face)*wob;}
+      ball(bp);person(pos,String(p.n),g.face,'#c8ef4a',sole?'#8cc8ff':null);});
+    // Trainer
+    let tPos={x:TR.x,y:TR.y},tFace=-Math.PI/2;
+    if(V.key==='vormachen'&&c&&c.k&&!c.reset){const u=T<c.t0+.15?0:clamp((T-c.t0-.15)/(c.t2-c.t0-.15),0,1),e=ease(u);
+      // Trainer schaut zu den Spielern: seine Seiten sind im Bild vertauscht; Spieler machen es spiegelbildlich nach
+      const dv=RW_DIRS[c.k].v,tv={x:dv.x,y:-dv.y};const out=Math.sin(Math.PI*clamp((T-c.t0)/(c.t3-c.t0),0,1));
+      tPos={x:TR.x+tv.x*1.4*out,y:TR.y+tv.y*1.4*out};}
+    if(V.key==='vormachen'){const tb={x:tPos.x+Math.cos(tFace)*.62,y:tPos.y+Math.sin(tFace)*.62};ball(tb);}
+    person(tPos,'T',tFace,'#f2f4f2','#111');
+    const live=c&&c.k&&T<c.t3;
+    if(showAnn&&live){
+      if(V.key==='ansage')bubble({x:tPos.x,y:tPos.y-1.1},RW_DIRS[c.k].s);
+      if(V.key==='karten'||V.key==='zwei')card(tPos,RW_CARDS[c.k].c,clamp((T-c.t0)/.25,0,1));
+      if(V.key==='zwei')bubble({x:tPos.x+3.2,y:tPos.y-.9},RW_DIRS[c.say].s,'rgba(229,72,77,.0)');
+      if(V.key==='vormachen')tag(tPos.x,tPos.y+1.6,'macht vor','rgba(10,16,24,.72)');
+    }
+    if(showAnn&&(V.key==='karten'||V.key==='zwei'))legend();
+    if(showAnn){tag(W/2,23.2,'Spieler schauen zum Trainer · links/rechts aus ihrer Sicht');
+      if(live&&T>c.t1-.1)tag(W/2,5.6,'Alle: '+RW_DIRS[c.k].l+(V.key==='zwei'?' (Karte zählt!)':''),'rgba(14,107,47,.92)');}
+  }
+  /* ---------- UI ---------- */
+  const steps=q('steps');
+  RW_VARS.forEach((V,i)=>{const s=document.createElement('span');s.className='chip';s.textContent=(i+1)+' · '+V.label;s.dataset.i=i;
+    s.onclick=()=>{playing=false;T=plan[i].cmds[0].t1+.5;};steps.appendChild(s);});
+  let lastKey='';
+  function updateUI(){
+    const vi=varAt(T),V=RW_VARS[vi],c=cmdAt(T);let st,ti=V.title,tx=V.text;
+    if(T===0&&!playing){st='Richtungswechsel · 4 Varianten';ti='Richtungswechsel auf Signal';tx='▶ Abspielen startet die Übung. Je Variante '+NSIG+' Signale, danach zurück auf die Linie.';}
+    else if(T>=plan.end-1.2){st='Fertig';ti='Alle Varianten durchgespielt';tx='Mit ⟲ Neu von vorn – oder Tempo „im Laufen“ und 8 Richtungen wählen.';}
+    else if(!c||c.v!==vi||c.reset||T>=c.t3)st='Variante '+(vi+1)+' von 4 · zurück auf die Linie';
+    else{const d=RW_DIRS[c.k];st='Variante '+(vi+1)+' von 4 · Signal '+(c.i+1)+' von '+NSIG+' · ';
+      st+=V.key==='karten'?RW_CARDS[c.k].n+' = '+d.l:V.key==='zwei'?'Ruf „'+RW_DIRS[c.say].s.replace('!','')+'“, Karte '+RW_CARDS[c.k].n+' → '+d.l:d.l;}
+    const key=st+ti+tx;if(key!==lastKey){lastKey=key;q('ovStep').textContent=st;q('ovTitle').textContent=ti;q('ovText').textContent=tx;}
+    [...steps.children].forEach(s=>{const i=+s.dataset.i;s.classList.toggle('on',(T>0||playing)&&i===vi&&T<plan.end-1.2);s.classList.toggle('done',i<vi||T>=plan.end-1.2);});
+    q('ov').classList.toggle('hidden',!showText);q('bPlay').textContent=playing?'⏸ Pause':'▶ Abspielen';
+  }
+  function frame(ts){if(!alive)return;if(playing){T+=Math.min(.05,(ts-last)/1000)*speed;if(T>=plan.end){T=plan.end;playing=false;}}
+    last=ts;draw();updateUI();raf=requestAnimationFrame(frame);}
+  const sig=()=>allCmds().filter(x=>!x.reset);
+  q('bPlay').onclick=()=>{if(!playing&&T>=plan.end)T=0;playing=!playing;};
+  q('bRestart').onclick=()=>{T=0;playing=true;};
+  q('bNext').onclick=()=>{playing=false;const n=sig().find(x=>x.t0>T+.05);T=n?n.t1+.6*(n.t2-n.t1):plan.end;};
+  q('bPrev').onclick=()=>{playing=false;const L=sig().filter(x=>x.t0<T-.05);const cur=L.pop();
+    if(cur&&T-cur.t1>1.4){T=cur.t1+.6*(cur.t2-cur.t1);return;}const p=L.pop();T=p?p.t1+.6*(p.t2-p.t1):0;};
+  q('sSpeed').onchange=e=>speed=+e.target.value;
+  const rebuild=()=>{const vi=varAt(T),was=T>0;build();T=was?plan[vi].cmds[0].t0:0;};
+  q('sGait').onchange=e=>{gait=e.target.value;store('rwGait',gait);rebuild();};
+  q('sDirs').onchange=e=>{ndirs=+e.target.value;store('rwDirs',String(ndirs));rebuild();};
+  q('sRows').onchange=e=>{rows=+e.target.value;store('rwRows',String(rows));rebuild();};
+  exOpts(root,['all','runs','text','ann'],o=>{showText=o.text;showAll=o.all;showWays=o.runs;showAnn=o.ann;});
+  function onKey(e){if(e.target.tagName==='SELECT'||e.target.tagName==='INPUT'||e.target.tagName==='BUTTON'&&e.code==='Space')return;
+    if(e.code==='Space'){e.preventDefault();q('bPlay').click();}else if(e.key==='ArrowRight')q('bNext').click();
+    else if(e.key==='ArrowLeft')q('bPrev').click();else if(e.key==='r'||e.key==='R')q('bRestart').click();}
+  document.addEventListener('keydown',onKey);
+  function resize(){CW=cv.parentElement.clientWidth;if(!CW)return;CH=CW*H/W;K=CW/W;DPR=window.devicePixelRatio||1;
+    cv.style.height=CH+'px';cv.width=Math.round(CW*DPR);cv.height=Math.round(CH*DPR);}
+  let ro=null;if(window.ResizeObserver){ro=new ResizeObserver(resize);ro.observe(cv.parentElement);}
+  window.addEventListener('resize',resize);resize();raf=requestAnimationFrame(frame);
+  root._sim={setT:t=>{T=t},get T(){return T},plan:()=>plan};
+  return function destroy(){alive=false;cancelAnimationFrame(raf);document.removeEventListener('keydown',onKey);window.removeEventListener('resize',resize);if(ro)ro.disconnect();};
 }
 
 /* =====================================================================
