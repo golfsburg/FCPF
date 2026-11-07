@@ -241,6 +241,7 @@ main{max-width:1000px;margin:0 auto;padding:14px 16px 40px}
 .mvhint{position:absolute;left:10px;top:10px;font:600 11.5px/1 system-ui,sans-serif;color:#f1f4f6;background:rgba(10,16,24,.6);padding:6px 8px;border-radius:6px;pointer-events:none;transition:opacity .4s}
 .mvhint.gone{opacity:0}
 .pam .rwstage{max-width:780px;margin:0 auto}
+.rwcard{display:inline-block;width:12px;height:16px;border-radius:2px;border:1.5px solid #fff;margin-right:8px;vertical-align:-3px;transform:rotate(-8deg)}
 
 /* ===== FCPF-Layout ===== */
 html,body{height:auto;min-height:100%}
@@ -4250,8 +4251,12 @@ function mountTTTeams(root){
    RELEASE NOTES (Kurzform) – Langform im Dokument „Release Notes & Ideen“
    Neue Version: oben in APP_NOTES einfügen, APP_VERSION anpassen.
    ===================================================================== */
-const APP_VERSION='3.3';
+const APP_VERSION='3.4';
 const APP_NOTES=[
+ {v:'3.4',d:'07.11.2026',t:'Richtungswechsel: Karten und Ton',items:[
+   'Farbkarten sind jetzt immer sichtbar (auch wenn „Zeichnungen“ aus ist), größer und mit Farbe im Textfeld',
+   '🔊 Ton: Ansagen werden vorgelesen („Links“, „Vor“ …), bei Karten und Vormachen ertönt ein Pfiff',
+   'Bei „Zwei Signale“ wird die falsche Richtung gerufen – die Karte zählt']},
  {v:'3.3',d:'07.11.2026',t:'Neue Übung: Richtungswechsel auf Signal',items:[
    'Dribbling › Ballführen: alle mit Ball auf einer Linie, der Trainer gibt die Richtung vor',
    'Vier Varianten: Ansage, Nachmachen (spiegelverkehrt), farbige Karten, zwei Signale (Karte hat Vorrang)',
@@ -4698,7 +4703,7 @@ function mountRichtungswechsel(root){
   <p class="sub">Alle Spieler stehen mit Ball am Fuß auf einer Linie, der Trainer steht vor der Gruppe. Auf sein Signal dribbeln alle blitzschnell in die neue Richtung – Ball sicher am Fuß, Blick zum Trainer.</p>
   <div class="stage rwstage"><canvas data-r="cv"></canvas></div>
   <div class="ov below" data-r="ov">
-    <div class="ovStep" data-r="ovStep"></div>
+    <div class="ovStep"><span class="rwcard" data-r="ovCard" hidden></span><span data-r="ovStep"></span></div>
     <div class="ovTitle" data-r="ovTitle"></div>
     <div class="ovText" data-r="ovText"></div>
   </div>
@@ -4715,6 +4720,7 @@ function mountRichtungswechsel(root){
   <div class="bar">
     <label>Bewegung <select data-r="sGait"><option value="gehen">im Gehen (Anfang)</option><option value="laufen">im Laufen</option></select></label>
     <label>Richtungen <select data-r="sDirs"><option value="4">4 Richtungen</option><option value="8">8 (mit diagonal)</option></select></label>
+    <label title="Ansagen werden vorgelesen, bei Karten und Vormachen ertönt ein Pfiff"><input type="checkbox" data-r="cSound"> 🔊 Ton (Ansagen vorlesen)</label>
     <label>Reihen <select data-r="sRows"><option value="1">1 Reihe</option><option value="2">2 Reihen</option><option value="3">3 Reihen</option></select></label>
   </div>
   ${exOptsHTML()}
@@ -4811,10 +4817,10 @@ function mountRichtungswechsel(root){
     ctx.fillStyle='#fff';rr(X,Y,w,h,h/2);ctx.fill();ctx.beginPath();ctx.moveTo(p.x*K-6,Y+h-1);ctx.lineTo(p.x*K+2,Y+h+8);ctx.lineTo(p.x*K+6,Y+h-1);ctx.fill();
     ctx.strokeStyle=col||'rgba(0,0,0,.2)';ctx.lineWidth=col?2.5:1;rr(X,Y,w,h,h/2);ctx.stroke();
     ctx.fillStyle='#111';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,X+w/2,Y+h/2+1);ctx.restore();}
-  function card(p,col,up){const w=clamp(K*.95,13,24),h=w*1.35,X=p.x*K,Y=p.y*K-h*(.4+up*.5);
+  function card(p,col,up){const w=clamp(K*1.3,20,36),h=w*1.38,X=p.x*K+w*.55,Y=p.y*K-h*(.35+up*.45);
     ctx.save();ctx.translate(X,Y);ctx.rotate(-.12);ctx.fillStyle='rgba(0,0,0,.3)';rr(-w/2+2,-h/2+3,w,h,3);ctx.fill();
     ctx.fillStyle=col;rr(-w/2,-h/2,w,h,3);ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();ctx.restore();
-    ctx.strokeStyle='#e7b08a';ctx.lineWidth=clamp(K*.22,3,5);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(X-4,p.y*K-4);ctx.lineTo(X,Y+h/2-2);ctx.stroke();}
+    ctx.strokeStyle='#e7b08a';ctx.lineWidth=clamp(K*.22,3,5);ctx.lineCap='round';ctx.beginPath();ctx.moveTo(p.x*K+6,p.y*K-2);ctx.lineTo(X,Y+h/2-2);ctx.stroke();ctx.lineCap='butt';}
   function tag(x,y,txt,bg){const fs=clamp(K*.45,10,13);ctx.save();ctx.font=`600 ${fs}px system-ui,sans-serif`;const w=ctx.measureText(txt).width+12,h=fs+9;
     const X=clamp(x*K-w/2,3,CW-w-3),Y=clamp(y*K-h/2,3,CH-h-3);ctx.fillStyle=bg||'rgba(10,16,24,.72)';rr(X,Y,w,h,h/2);ctx.fill();
     ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(txt,X+w/2,Y+h/2+.5);ctx.restore();}
@@ -4847,16 +4853,35 @@ function mountRichtungswechsel(root){
     if(V.key==='vormachen'){const tb={x:tPos.x+Math.cos(tFace)*.62,y:tPos.y+Math.sin(tFace)*.62};ball(tb);}
     person(tPos,'T',tFace,'#f2f4f2','#111');
     const live=c&&c.k&&T<c.t3;
-    if(showAnn&&live){
+    if(live){ // Signale gehören zur Übung und sind immer sichtbar
       if(V.key==='ansage')bubble({x:tPos.x,y:tPos.y-1.1},RW_DIRS[c.k].s);
       if(V.key==='karten'||V.key==='zwei')card(tPos,RW_CARDS[c.k].c,clamp((T-c.t0)/.25,0,1));
       if(V.key==='zwei')bubble({x:tPos.x+3.2,y:tPos.y-.9},RW_DIRS[c.say].s,'rgba(229,72,77,.0)');
-      if(V.key==='vormachen')tag(tPos.x,tPos.y+1.6,'macht vor','rgba(10,16,24,.72)');
+      if(V.key==='vormachen'&&showAnn)tag(tPos.x,tPos.y+1.6,'macht vor','rgba(10,16,24,.72)');
     }
-    if(showAnn&&(V.key==='karten'||V.key==='zwei'))legend();
+    if(V.key==='karten'||V.key==='zwei')legend();
     if(showAnn){tag(W/2,23.2,'Spieler schauen zum Trainer · links/rechts aus ihrer Sicht');
       if(live&&T>c.t1-.1)tag(W/2,5.6,'Alle: '+RW_DIRS[c.k].l+(V.key==='zwei'?' (Karte zählt!)':''),'rgba(14,107,47,.92)');}
   }
+  /* ---------- Ton: Ansagen vorlesen (Sprachausgabe), Pfiff bei Karte/Vormachen ---------- */
+  let sound=store('rwSound')!=='0',actx=null,voice=null;
+  const SY=window.speechSynthesis||null;
+  function pickVoice(){if(!SY)return;const v=SY.getVoices();voice=v.find(x=>/^de(-|_)AT/i.test(x.lang))||v.find(x=>/^de(-|_)DE/i.test(x.lang))||v.find(x=>/^de/i.test(x.lang))||null;}
+  if(SY){pickVoice();try{SY.addEventListener('voiceschanged',pickVoice);}catch(e){}}
+  function unlock(){try{if(!actx){const A=window.AudioContext||window.webkitAudioContext;if(A)actx=new A();}if(actx&&actx.state==='suspended')actx.resume();}catch(e){}
+    try{if(SY&&!unlock.done){const u=new SpeechSynthesisUtterance(' ');u.volume=0;SY.speak(u);unlock.done=true;}}catch(e){}}
+  function whistle(){if(!sound)return;unlock();if(!actx)return;try{const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain(),l=actx.createOscillator(),lg=actx.createGain();
+    o.type='sine';o.frequency.value=2650;l.frequency.value=34;lg.gain.value=170;l.connect(lg);lg.connect(o.frequency);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.22,t+.02);g.gain.setValueAtTime(.22,t+.26);g.gain.linearRampToValueAtTime(0,t+.34);
+    o.connect(g);g.connect(actx.destination);o.start(t);l.start(t);o.stop(t+.36);l.stop(t+.36);}catch(e){}}
+  function speak(txt){if(!sound)return;if(!SY){whistle();return;}
+    try{SY.cancel();const u=new SpeechSynthesisUtterance(txt);u.lang=voice?voice.lang:'de-DE';if(voice)u.voice=voice;u.rate=gait==='laufen'?1.2:1.05;u.pitch=1;u.volume=1;SY.speak(u);}catch(e){}}
+  function cue(c){const V=RW_VARS[c.v];
+    if(V.key==='ansage')speak(RW_DIRS[c.k].s.replace('!',''));
+    else if(V.key==='zwei')speak(RW_DIRS[c.say].s.replace('!',''));
+    else whistle();}
+  q('cSound').checked=sound;
+  q('cSound').onchange=e=>{sound=e.target.checked;store('rwSound',sound?'1':'0');if(sound){unlock();speak('Ton an');}else if(SY)SY.cancel();};
   /* ---------- UI ---------- */
   const steps=q('steps');
   RW_VARS.forEach((V,i)=>{const s=document.createElement('span');s.className='chip';s.textContent=(i+1)+' · '+V.label;s.dataset.i=i;
@@ -4869,15 +4894,17 @@ function mountRichtungswechsel(root){
     else if(!c||c.v!==vi||c.reset||T>=c.t3)st='Variante '+(vi+1)+' von 4 · zurück auf die Linie';
     else{const d=RW_DIRS[c.k];st='Variante '+(vi+1)+' von 4 · Signal '+(c.i+1)+' von '+NSIG+' · ';
       st+=V.key==='karten'?RW_CARDS[c.k].n+' = '+d.l:V.key==='zwei'?'Ruf „'+RW_DIRS[c.say].s.replace('!','')+'“, Karte '+RW_CARDS[c.k].n+' → '+d.l:d.l;}
+    const oc=q('ovCard'),showC=c&&c.k&&!c.reset&&T<c.t3&&(V.key==='karten'||V.key==='zwei')&&c.v===vi;oc.hidden=!showC;if(showC)oc.style.background=RW_CARDS[c.k].c;
     const key=st+ti+tx;if(key!==lastKey){lastKey=key;q('ovStep').textContent=st;q('ovTitle').textContent=ti;q('ovText').textContent=tx;}
     [...steps.children].forEach(s=>{const i=+s.dataset.i;s.classList.toggle('on',(T>0||playing)&&i===vi&&T<plan.end-1.2);s.classList.toggle('done',i<vi||T>=plan.end-1.2);});
     q('ov').classList.toggle('hidden',!showText);q('bPlay').textContent=playing?'⏸ Pause':'▶ Abspielen';
   }
-  function frame(ts){if(!alive)return;if(playing){T+=Math.min(.05,(ts-last)/1000)*speed;if(T>=plan.end){T=plan.end;playing=false;}}
+  function frame(ts){if(!alive)return;if(playing){const T0=T;T+=Math.min(.05,(ts-last)/1000)*speed;if(T>=plan.end){T=plan.end;playing=false;}
+      sig().forEach(c=>{if(c.t0>T0&&c.t0<=T)cue(c);});}
     last=ts;draw();updateUI();raf=requestAnimationFrame(frame);}
   const sig=()=>allCmds().filter(x=>!x.reset);
-  q('bPlay').onclick=()=>{if(!playing&&T>=plan.end)T=0;playing=!playing;};
-  q('bRestart').onclick=()=>{T=0;playing=true;};
+  q('bPlay').onclick=()=>{unlock();if(!playing&&T>=plan.end)T=0;playing=!playing;if(!playing&&SY)SY.cancel();};
+  q('bRestart').onclick=()=>{unlock();T=0;playing=true;};
   q('bNext').onclick=()=>{playing=false;const n=sig().find(x=>x.t0>T+.05);T=n?n.t1+.6*(n.t2-n.t1):plan.end;};
   q('bPrev').onclick=()=>{playing=false;const L=sig().filter(x=>x.t0<T-.05);const cur=L.pop();
     if(cur&&T-cur.t1>1.4){T=cur.t1+.6*(cur.t2-cur.t1);return;}const p=L.pop();T=p?p.t1+.6*(p.t2-p.t1):0;};
@@ -4896,7 +4923,7 @@ function mountRichtungswechsel(root){
   let ro=null;if(window.ResizeObserver){ro=new ResizeObserver(resize);ro.observe(cv.parentElement);}
   window.addEventListener('resize',resize);resize();raf=requestAnimationFrame(frame);
   root._sim={setT:t=>{T=t},get T(){return T},plan:()=>plan};
-  return function destroy(){alive=false;cancelAnimationFrame(raf);document.removeEventListener('keydown',onKey);window.removeEventListener('resize',resize);if(ro)ro.disconnect();};
+  return function destroy(){alive=false;try{SY&&SY.cancel();actx&&actx.close();}catch(e){}cancelAnimationFrame(raf);document.removeEventListener('keydown',onKey);window.removeEventListener('resize',resize);if(ro)ro.disconnect();};
 }
 
 /* =====================================================================
