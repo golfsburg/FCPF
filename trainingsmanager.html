@@ -4249,8 +4249,13 @@ function mountTTTeams(root){
    RELEASE NOTES (Kurzform) – Langform im Dokument „Release Notes & Ideen“
    Neue Version: oben in APP_NOTES einfügen, APP_VERSION anpassen.
    ===================================================================== */
-const APP_VERSION='3.1';
+const APP_VERSION='3.2';
 const APP_NOTES=[
+ {v:'3.2',d:'07.11.2026',t:'Hüftmobilisation: Übung 04 und 05',items:[
+   '04: Beine abwechselnd anheben, Hände nach vorne drücken, Oberkörper anheben',
+   '05: Ball in der Mittelposition zwischen Händen und Füßen übergeben, dann durchstrecken',
+   'Figur kann jetzt Oberkörper und Arme heben und die Beine einzeln bewegen',
+   'Hinweis im Feld zeigt, wo der Ball gerade ist']},
  {v:'3.1',d:'07.11.2026',t:'Neuer Bereich Bewegung',items:[
    'Neuer Reiter „Bewegung“ für Mobilisation, Kräftigung und Dehnen',
    'Erste Übung: Hüftmobilisation in Rückenlage mit den Übungen 01–03 als animierte 3D-Figur',
@@ -4347,56 +4352,90 @@ const MOVE_ICON='<svg viewBox="0 0 34 34" width="34" height="34"><rect x="1" y="
 
 TABS.splice(TABS.findIndex(t=>t.id==='tt'),0,{id:'move',label:'Bewegung'});
 EXERCISES.push({id:'mobi-rueckenlage',tab:'move',group:'Mobilisation',title:'Hüftmobilisation in Rückenlage',
-  short:'Beine seitlich pendeln und vor–zurück führen, Schultern bleiben am Boden',icon:MOVE_ICON,mount:mountMobiRuecken});
+  short:'Beine pendeln, vor–zurück, im Wechsel anheben und Ball übergeben – 5 Übungen',icon:MOVE_ICON,mount:mountMobiRuecken});
 
 /* ---------- Figur: Gelenke aus Haltungs-Parametern ----------
    x = Körperlängsachse (Kopf 0 → Füße), y = Seite (+y = linke Körperseite),
-   z = Höhe über der Matte. Parameter: flex = Hüftbeugung in Grad (0 = Bein
-   liegt, 90 = Bein senkrecht), knee = Kniebeugung, roll = Pendeln um die
-   Längsachse (+ = Beine nach rechts), spread = Abstand der Beine.          */
+   z = Höhe über der Matte. Parameter (Grad):
+   flexL/flexR = Hüftbeugung je Bein (0 = Bein liegt, 90 = senkrecht),
+   knee = Kniebeugung, roll = Pendeln um die Längsachse (+ = nach rechts),
+   trunk = Oberkörper anheben, armMix = 0 Arme seitlich am Boden / 1 Arme
+   in Körperebene mit Winkel armA (0 = Richtung Füße, 180 = über Kopf).      */
 const MV_SEG={thigh:.44,shank:.43,foot:.2};
+const MV_KEYS=['flexL','flexR','knee','roll','trunk','armMix','armA'];
+function mvNorm(P){P=P||{};const f=P.flex||0;
+  return{flexL:P.flexL!=null?P.flexL:f,flexR:P.flexR!=null?P.flexR:f,knee:P.knee||0,roll:P.roll||0,
+    trunk:P.trunk||0,armMix:P.armMix||0,armA:P.armA!=null?P.armA:180};}
+function mvLerp(a,b,u){a=mvNorm(a);b=mvNorm(b);const o={};MV_KEYS.forEach(k=>o[k]=a[k]+(b[k]-a[k])*u);return o;}
 function mvPose(P){
+  P=mvNorm(P);
   const r=v=>v*Math.PI/180, zc=.1, ax={x:.82,z:zc};
   const rollPt=(p,deg)=>{const t=r(deg),dz=p.z-zc;return{x:p.x,y:p.y*Math.cos(t)-dz*Math.sin(t),z:zc+p.y*Math.sin(t)+dz*Math.cos(t)};};
+  // Oberkörper um die Hüftachse anheben
+  const tr=r(P.trunk),up=(p,f=1)=>{const t=tr*f,dx=p.x-ax.x,dz=p.z-zc;return{x:ax.x+dx*Math.cos(t)+dz*Math.sin(t),y:p.y,z:zc-dx*Math.sin(t)+dz*Math.cos(t)};};
   const pel=P.roll*.45;  // Becken dreht etwas mit, Schultern nicht
-  const J={};
-  J.head={x:.1,y:0,z:.11};J.neck={x:.24,y:0,z:.09};
-  J.shL={x:.3,y:.19,z:.08};J.shR={x:.3,y:-.19,z:.08};
-  J.elL={x:.55,y:.36,z:.04};J.elR={x:.55,y:-.36,z:.04};
-  J.haL={x:.79,y:.5,z:.03};J.haR={x:.79,y:-.5,z:.03};
-  J.waist=rollPt({x:.62,y:0,z:.1},pel*.5);
+  const J={},mix=(a,b,u)=>({x:a.x+(b.x-a.x)*u,y:a.y+(b.y-a.y)*u,z:a.z+(b.z-a.z)*u});
+  J.head=up({x:.1,y:0,z:.11});J.neck=up({x:.24,y:0,z:.09});J.hair=up({x:.07,y:0,z:.08});
+  const aa=r(P.armA),m=Math.max(0,Math.min(1,P.armMix));
+  ['L','R'].forEach(s=>{const sy=s==='L'?1:-1,sh={x:.3,y:sy*.19,z:.08};
+    const elS={x:.55,y:sy*.36,z:.04},haS={x:.79,y:sy*.5,z:.03};
+    const elA={x:sh.x+.28*Math.cos(aa),y:sy*.15,z:Math.max(.04,sh.z+.28*Math.sin(aa))},haA={x:sh.x+.55*Math.cos(aa),y:sy*.09,z:Math.max(.035,sh.z+.55*Math.sin(aa))};
+    J['sh'+s]=up(sh);J['el'+s]=up(mix(elS,elA,m));J['ha'+s]=up(mix(haS,haA,m));});
+  J.waist=up(rollPt({x:.62,y:0,z:.1},pel*.5),.5);
   J.hipL=rollPt({x:ax.x,y:.1,z:.1},pel);J.hipR=rollPt({x:ax.x,y:-.1,z:.1},pel);
-  const f=r(P.flex),k=r(P.knee),sp=P.spread||.055;
+  const k=r(P.knee),sp=.055;
   ['L','R'].forEach(s=>{
-    const sy=s==='L'?1:-1,h={x:ax.x,y:sy*.1,z:zc};
-    const kn={x:h.x+MV_SEG.thigh*Math.cos(f),y:sy*sp+ (h.y-sy*sp)*.35*Math.cos(f),z:h.z+MV_SEG.thigh*Math.sin(f)};
+    const f=r(s==='L'?P.flexL:P.flexR),sy=s==='L'?1:-1,h={x:ax.x,y:sy*.1,z:zc};
+    const kn={x:h.x+MV_SEG.thigh*Math.cos(f),y:sy*sp+(h.y-sy*sp)*.35*Math.cos(f),z:h.z+MV_SEG.thigh*Math.sin(f)};
     const a=f-k,an={x:kn.x+MV_SEG.shank*Math.cos(a),y:sy*sp,z:kn.z+MV_SEG.shank*Math.sin(a)};
     const b=a+r(90-12),to={x:an.x+MV_SEG.foot*Math.cos(b),y:sy*(sp+.01),z:an.z+MV_SEG.foot*Math.sin(b)};
     J['kn'+s]=rollPt(kn,P.roll);J['an'+s]=rollPt(an,P.roll);J['to'+s]=rollPt(to,P.roll);
   });
+  const c=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:(a.z+b.z)/2});
+  J.anM=c(J.anL,J.anR);J.haM=c(J.haL,J.haR);
   return J;
 }
 
 /* ---------- Übungsdaten ---------- */
 const MOBI_RUECKEN={
   title:'Hüftmobilisation in Rückenlage',
-  sub:'Drei Übungen hintereinander in Rückenlage auf der Matte. Arme seitlich am Boden, die Schultern bleiben während der ganzen Übung liegen.',
+  sub:'Fünf Übungen hintereinander in Rückenlage auf der Matte. Bei 01–03 liegen die Arme seitlich und die Schultern bleiben am Boden, bei 04 und 05 hebt der Oberkörper mit an – bei 05 mit Ball.',
   rest:{flex:0,knee:0,roll:0},
   phases:[
-    {nr:'01',label:'Knie gebeugt',title:'Knie gebeugt – Beine seitlich pendeln',
+    {nr:'01',label:'Knie gebeugt',title:'Knie gebeugt – Beine seitlich pendeln',shoulders:true,
      text:'Knie geschlossen und 90° gebeugt, dann die Beine links und rechts pendeln – die Schultern bleiben dabei auf dem Boden.',
-     P:3.4,amp:68,pose:t=>({flex:90,knee:90,roll:0}),motion:'roll'},
-    {nr:'02',label:'Beine gestreckt',title:'Beine gestreckt – seitlich pendeln',
+     P:3.4,start:{flex:90,knee:90},
+     at:w=>{const roll=68*Math.sin(w);return{P:{flex:90,knee:90,roll},dir:Math.cos(w)>0?'nach rechts':'nach links'};},
+     lab:P=>Math.abs(P.roll)>4?Math.round(Math.abs(P.roll))+'° '+(P.roll>0?'rechts':'links'):'Mitte',tracks:['anM']},
+    {nr:'02',label:'Beine gestreckt',title:'Beine gestreckt – seitlich pendeln',shoulders:true,
      text:'Fußgelenke geschlossen, Beine gestreckt, die Schultern bleiben am Boden – Beine von links nach rechts und zurück pendeln.',
-     P:3.8,amp:52,pose:t=>({flex:90,knee:0,roll:0}),motion:'roll'},
-    {nr:'03',label:'Vor & zurück',title:'Gestreckte Beine vor und zurück',
+     P:3.8,start:{flex:90},
+     at:w=>{const roll=52*Math.sin(w);return{P:{flex:90,roll},dir:Math.cos(w)>0?'nach rechts':'nach links'};},
+     lab:P=>Math.abs(P.roll)>4?Math.round(Math.abs(P.roll))+'° '+(P.roll>0?'rechts':'links'):'Mitte',tracks:['anM']},
+    {nr:'03',label:'Vor & zurück',title:'Gestreckte Beine vor und zurück',shoulders:true,
      text:'Geschlossene, gestreckte Beine vor und zurück führen – langsam absenken, nicht ablegen, und wieder bis zur Senkrechten heben.',
-     P:3.6,lo:22,pose:t=>({flex:90,knee:0,roll:0}),motion:'flex'}],
-  desc:`<h3>Ziel</h3><ul><li>Hüfte und Lendenwirbelsäule mobilisieren, Rumpf ansteuern</li><li>Gut geeignet zum Aufwärmen oder als Teil des Ausdauer-/Regenerationstrainings</li></ul>
-  <h3>Ausgangsposition</h3><ul><li>Rückenlage auf der Matte, Kopf liegt ab</li><li>Arme schräg seitlich am Boden, Handflächen nach unten</li><li>Beine geschlossen</li></ul>
-  <h3>Ablauf</h3><ol><li><b>01</b> Knie geschlossen und 90° gebeugt, Beine links und rechts pendeln.</li><li><b>02</b> Fußgelenke geschlossen, Beine gestreckt, von links nach rechts und zurück pendeln.</li><li><b>03</b> Geschlossene, gestreckte Beine vor und zurück führen.</li></ol>
-  <h3>Coaching-Punkte</h3><ul><li>Schultern bleiben immer am Boden – nur so weit pendeln, wie die Schultern liegen bleiben</li><li>Knie bzw. Fußgelenke bleiben geschlossen</li><li>Ruhig und kontrolliert, nicht schwungvoll – ausatmen beim Absenken</li><li>Bei 03 den unteren Rücken nicht ins Hohlkreuz drücken lassen</li></ul>
-  <h3>Dosierung</h3><ul><li>6–10 Wiederholungen je Übung (eine Wiederholung = einmal links und rechts bzw. einmal ab und auf)</li><li>Für Jüngere: weniger weit pendeln, bei 03 die Knie leicht beugen</li></ul>`
+     P:3.6,start:{flex:90},
+     at:w=>({P:{flex:90-68*(1-Math.cos(w))/2},dir:Math.sin(w)>0?'absenken':'heben'}),
+     lab:P=>Math.round(P.flexL)+'°',tracks:['anM']},
+    {nr:'04',label:'Beine im Wechsel',title:'Beine abwechselnd anheben, Oberkörper hoch',
+     text:'Beine abwechselnd anheben und dabei die Hände nach vorne drücken und den Oberkörper anheben. Das untere Bein schwebt knapp über der Matte.',
+     P:2.8,start:{flexL:12,flexR:72,trunk:30,armMix:1,armA:16},
+     at:w=>{const u=(1-Math.cos(w))/2,push=Math.pow(Math.sin(w),2);
+       return{P:{flexL:12+60*u,flexR:12+60*(1-u),trunk:28+5*(1-push),armMix:1,armA:16-6*(1-push)},dir:Math.sin(w)>0?'linkes Bein hoch':'rechtes Bein hoch'};},
+     lab:()=>'',tracks:['anL','anR','haM']},
+    {nr:'05',label:'Ball übergeben',title:'Ball in der Mitte übergeben, dann durchstrecken',ball:true,
+     text:'Aus der gestreckten Rückenlage (Arme über dem Kopf) Oberkörper und gestreckte Beine gleichzeitig anheben. In der Mittelposition wird der Ball von den Händen an die Füße übergeben (und beim nächsten Mal zurück), dann wieder komplett durchstrecken.',
+     P:4.2,start:{flex:4,trunk:0,armMix:1,armA:178},
+     at:(w,n)=>{const u=(1-Math.cos(w))/2,toFeet=n%2===0,first=w<Math.PI;
+       return{P:{flex:4+71*u,trunk:60*u,armMix:1,armA:178-80*u},
+         ball:(first?toFeet:!toFeet)?'ha':'an',
+         dir:first?'hoch & übergeben':'durchstrecken'};},
+     lab:()=>'',tracks:['anM','haM']}],
+  desc:`<h3>Ziel</h3><ul><li>Hüfte und Lendenwirbelsäule mobilisieren (01–03), Bauchmuskulatur kräftigen (04–05)</li><li>Gut geeignet zum Aufwärmen oder als Teil des Ausdauer-/Regenerationstrainings</li></ul>
+  <h3>Ausgangsposition</h3><ul><li>Rückenlage auf der Matte, Kopf liegt ab</li><li>Arme schräg seitlich am Boden, Handflächen nach unten</li><li>Beine geschlossen</li><li>Für 05 einen Ball (Fußball oder leichter Medizinball) in den Händen über dem Kopf</li></ul>
+  <h3>Ablauf</h3><ol><li><b>01</b> Knie geschlossen und 90° gebeugt, Beine links und rechts pendeln.</li><li><b>02</b> Fußgelenke geschlossen, Beine gestreckt, von links nach rechts und zurück pendeln.</li><li><b>03</b> Geschlossene, gestreckte Beine vor und zurück führen.</li><li><b>04</b> Beine abwechselnd anheben und dabei die Hände nach vorne drücken und den Oberkörper anheben.</li><li><b>05</b> Ein Ball wird in der Mittelposition übergeben, dann wieder komplett durchstrecken.</li></ol>
+  <h3>Coaching-Punkte</h3><ul><li>Schultern bleiben immer am Boden – nur so weit pendeln, wie die Schultern liegen bleiben</li><li>Knie bzw. Fußgelenke bleiben geschlossen</li><li>Ruhig und kontrolliert, nicht schwungvoll – ausatmen beim Absenken</li><li>Bei 03 bis 05 den unteren Rücken nicht ins Hohlkreuz drücken lassen</li><li>Bei 04 Kinn leicht zur Brust, Blick zu den Knien, Hände aktiv nach vorne schieben</li><li>Bei 05 Beine und Arme gestreckt lassen, Ball sauber übergeben – nicht werfen</li></ul>
+  <h3>Dosierung</h3><ul><li>6–10 Wiederholungen je Übung (eine Wiederholung = einmal links und rechts bzw. einmal ab und auf)</li><li>Für Jüngere: weniger weit pendeln, bei 03–05 die Knie leicht beugen, bei 05 einen leichten Ball nehmen</li></ul>`
 };
 
 function mountMobiRuecken(root){
@@ -4447,23 +4486,18 @@ function mountMobiRuecken(root){
     PH.forEach((p,i)=>{const d=TR+reps*p.P;plan.push({i,s:t,mv:t+TR,e:t+d});t+=d+PAUSE;});
     plan.end=t;}
   build();
+  function moveAt(p,tt){const w=2*Math.PI*tt/p.P,n=Math.floor(tt/p.P),r=p.at(w,n);r.P=mvNorm(r.P);r.rep=Math.min(reps,n+1);return r;}
   function poseAt(t){
-    // vor der ersten Übung: Ruheposition
-    let prev=C.rest;
+    let prev=C.rest;   // vor der ersten Übung: Ruheposition
     for(const seg of plan){const p=PH[seg.i];
-      if(t<seg.s)return{P:prev,ph:seg.i-1,state:'pause',seg};
-      if(t<seg.mv){const u=ease((t-seg.s)/TR),a=prev,b=p.pose(0);
-        return{P:{flex:lerp(a.flex,b.flex,u),knee:lerp(a.knee,b.knee,u),roll:lerp(a.roll,b.roll,u)},ph:seg.i,state:'in',seg};}
-      if(t<seg.e){const tt=t-seg.mv,w=2*Math.PI*tt/p.P,P=Object.assign({},p.pose(0)),rep=Math.min(reps,Math.floor(tt/p.P)+1);
-        let dir='';
-        if(p.motion==='roll'){P.roll=p.amp*Math.sin(w);dir=Math.cos(w)>0?'nach rechts':'nach links';}
-        else{const u=(1-Math.cos(w))/2;P.flex=90-(90-p.lo)*u;dir=Math.sin(w)>0?'absenken':'heben';}
-        return{P,ph:seg.i,state:'move',rep,dir,seg};}
-      prev=p.pose(0);
+      if(t<seg.s)return{P:mvNorm(prev),ph:seg.i-1,state:'pause',seg};
+      if(t<seg.mv){const u=ease((t-seg.s)/TR);
+        return{P:mvLerp(prev,p.at(0,0).P,u),ph:seg.i,state:'in',seg,ball:p.ball?'ha':null};}
+      if(t<seg.e){const r=moveAt(p,t-seg.mv);return Object.assign(r,{ph:seg.i,state:'move',seg});}
+      prev=moveAt(p,seg.e-seg.mv).P;
     }
-    // Ende: zurück in die Ruheposition
-    const s=plan[plan.length-1].e+.2,u=ease(clamp((t-s)/TR,0,1)),a=PH[PH.length-1].pose(0),b=C.rest;
-    return{P:{flex:lerp(a.flex,b.flex,u),knee:lerp(a.knee,b.knee,u),roll:0},ph:PH.length,state:'done'};
+    const s=plan[plan.length-1].e+.2,u=ease(clamp((t-s)/TR,0,1));
+    return{P:mvLerp(prev,C.rest,u),ph:PH.length,state:'done'};
   }
   /* ---------- Projektion ---------- */
   let CW=0,CH=0,DPR=1,S=1,OX=0,OY=0;
@@ -4471,17 +4505,22 @@ function mountMobiRuecken(root){
     const X=p.x*Math.cos(ps)-p.y*Math.sin(ps),Y=p.x*Math.sin(ps)+p.y*Math.cos(ps);
     return{u:X,v:p.z*Math.cos(e)-Y*Math.sin(e),d:Y*Math.cos(e)+p.z*Math.sin(e)};}
   function fit(){let a=1e9,b=-1e9,c=1e9,d=-1e9;
-    for(const x of [-.25,1.98])for(const y of [-.68,.68])for(const z of [0,1.02]){const r=prj({x,y,z});a=Math.min(a,r.u);b=Math.max(b,r.u);c=Math.min(c,r.v);d=Math.max(d,r.v);}
+    for(const x of [-.45,1.98])for(const y of [-.68,.68])for(const z of [0,1.02]){const r=prj({x,y,z});a=Math.min(a,r.u);b=Math.max(b,r.u);c=Math.min(c,r.v);d=Math.max(d,r.v);}
     const pad=18;S=Math.min((CW-2*pad)/(b-a),(CH-2*pad)/(d-c));OX=CW/2-S*(a+b)/2;OY=CH/2+S*(c+d)/2;}
   const scr=p=>{const r=prj(p);return{x:OX+r.u*S,y:OY-r.v*S,d:r.d};};
   /* ---------- Zeichnen ---------- */
   const COL={skin:'#e7b08a',skinD:'#c98d66',shirt:'#0e6b2f',shirtD:'#0a5223',shorts:'#1a1d21',sock:'#f2f4f2',shoe:'#d9dde2',sole:'#8b939c',hair:'#3b2a20'};
   function seg(a,b,w,col,d){return{d:d!=null?d:(prj(a).d+prj(b).d)/2,f:()=>{const A=scr(a),B=scr(b);ctx.strokeStyle=col;ctx.lineWidth=w*S;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(A.x,A.y);ctx.lineTo(B.x,B.y);ctx.stroke();}};}
-  function figure(J,alpha){
+  function ballPos(J,w){if(!w)return null;
+    if(w==='ha'){const h=J.haM,e={x:(J.elL.x+J.elR.x)/2,y:0,z:(J.elL.z+J.elR.z)/2},dx=h.x-e.x,dz=h.z-e.z,l=Math.hypot(dx,dz)||1;return{x:h.x+dx/l*.09,y:0,z:Math.max(.11,h.z+dz/l*.09)};}
+    const a=J.anM,k={x:(J.knL.x+J.knR.x)/2,z:(J.knL.z+J.knR.z)/2},dx=a.x-k.x,dz=a.z-k.z,l=Math.hypot(dx,dz)||1;
+    return{x:a.x+dx/l*.05-dz/l*.1,y:0,z:Math.max(.11,a.z+dz/l*.05+dx/l*.1)};}
+  function figure(J,alpha,ball){
     const L=[];const mid=(a,b,t=.5)=>({x:lerp(a.x,b.x,t),y:lerp(a.y,b.y,t),z:lerp(a.z,b.z,t)});
     const ghost=alpha<1;
     // Arme
-    ['L','R'].forEach(s=>{L.push(seg(J['sh'+s],J['el'+s],.085,COL.shirt));L.push(seg(J['el'+s],J['ha'+s],.07,COL.skin));});
+    const armsUp=J.haL.z>.12||J.elL.z>.12;
+    ['L','R'].forEach(s=>{const a=seg(J['sh'+s],J['el'+s],.085,COL.shirt),b=seg(J['el'+s],J['ha'+s],.07,COL.skin);a.leg=b.leg=armsUp;L.push(a,b);});
     // Rumpf als gefülltes Viereck
     const tor=[J.shL,J.shR,J.hipR,J.hipL];
     L.push({d:tor.reduce((m,p)=>m+prj(p).d,0)/4-.02,f:()=>{const P=tor.map(scr);ctx.fillStyle=COL.shirt;ctx.strokeStyle=COL.shirt;ctx.lineWidth=.12*S;ctx.lineJoin='round';
@@ -4495,35 +4534,36 @@ function mountMobiRuecken(root){
     // Kopf
     L.push({d:prj(J.head).d,f:()=>{const H=scr(J.head),N=scr(J.neck);ctx.strokeStyle=COL.skinD;ctx.lineWidth=.09*S;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(H.x,H.y);ctx.lineTo(N.x,N.y);ctx.stroke();
       ctx.fillStyle=COL.skin;ctx.beginPath();ctx.arc(H.x,H.y,.105*S,0,7);ctx.fill();
-      const back=scr({x:J.head.x-.03,y:0,z:J.head.z-.03});ctx.fillStyle=COL.hair;ctx.beginPath();ctx.arc(back.x,back.y,.085*S,0,7);ctx.fill();}});
+      const back=scr(J.hair);ctx.fillStyle=COL.hair;ctx.beginPath();ctx.arc(back.x,back.y,.085*S,0,7);ctx.fill();}});
+    if(ball){const b=ball;L.push({leg:true,d:prj(b).d+.05,f:()=>{const c=scr(b),r=.11*S,g=ctx.createRadialGradient(c.x-r*.35,c.y-r*.4,r*.1,c.x,c.y,r);
+      g.addColorStop(0,'#ffffff');g.addColorStop(1,'#cfd5d9');ctx.fillStyle=g;ctx.beginPath();ctx.arc(c.x,c.y,r,0,7);ctx.fill();
+      ctx.fillStyle='#1a1d21';for(let i=0;i<5;i++){const a=i*1.2566+.3;ctx.beginPath();ctx.arc(c.x+Math.cos(a)*r*.55,c.y+Math.sin(a)*r*.55,r*.2,0,7);ctx.fill();}
+      ctx.beginPath();ctx.arc(c.x,c.y,r*.24,0,7);ctx.fill();ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(c.x,c.y,r,0,7);ctx.stroke();}});}
     // Arme, Rumpf und Kopf liegen am Boden → zuerst; Beine darüber nach Tiefe
     const floor=L.filter(o=>!o.leg),legs=L.filter(o=>o.leg).sort((a,b)=>a.d-b.d);
     ctx.save();ctx.globalAlpha=alpha;floor.sort((a,b)=>a.d-b.d).forEach(o=>o.f());legs.forEach(o=>o.f());ctx.restore();
   }
-  function ghostFig(J){ // blasse Umrissfigur (nur Beine)
+  function ghostFig(J){ // blasse Umrissfigur (Beine, bei angehobenem Oberkörper auch Arme)
     ctx.save();ctx.globalAlpha=.22;ctx.strokeStyle='#ffffff';ctx.lineCap='round';ctx.lineJoin='round';
-    ['L','R'].forEach(s=>{const P=[J['hip'+s],J['kn'+s],J['an'+s],J['to'+s]].map(scr);ctx.lineWidth=.05*S;
-      ctx.setLineDash([]);ctx.beginPath();P.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();});
+    const ch=[['hip','kn','an','to']];if(J.shL.z>.12||J.haL.z>.12)ch.push(['sh','el','ha']);
+    ch.forEach(c=>['L','R'].forEach(s=>{const P=c.map(k=>scr(J[k+s]));ctx.lineWidth=.05*S;
+      ctx.setLineDash([]);ctx.beginPath();P.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();}));
     ctx.restore();}
   function shadow(J){const pts=['kn','an','to'].flatMap(k=>[J[k+'L'],J[k+'R']]);
     ctx.save();ctx.fillStyle='rgba(0,0,0,.16)';pts.forEach(p=>{const g=scr({x:p.x,y:p.y,z:0}),r=(.09+.05*clamp(1-p.z,0,1))*S;
       ctx.beginPath();ctx.ellipse(g.x,g.y,r,r*Math.max(.25,Math.sin(view.el*Math.PI/180)),0,0,7);ctx.fill();});ctx.restore();}
   function mat(){
-    const c=[{x:-.22,y:-.62,z:0},{x:1.95,y:-.62,z:0},{x:1.95,y:.62,z:0},{x:-.22,y:.62,z:0}].map(scr);
+    const c=[{x:-.42,y:-.62,z:0},{x:1.95,y:-.62,z:0},{x:1.95,y:.62,z:0},{x:-.42,y:.62,z:0}].map(scr);
     ctx.fillStyle='#c9cdc6';ctx.beginPath();c.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.closePath();ctx.fill();
     // Mattendicke
-    const t=[{x:-.22,y:.62,z:0},{x:1.95,y:.62,z:0},{x:1.95,y:-.62,z:0}].map(p=>scr(p)),th=.035*S;
+    const t=[{x:-.42,y:.62,z:0},{x:1.95,y:.62,z:0},{x:1.95,y:-.62,z:0}].map(p=>scr(p)),th=.035*S;
     ctx.fillStyle='#9fa49c';ctx.beginPath();ctx.moveTo(t[0].x,t[0].y);ctx.lineTo(t[1].x,t[1].y);ctx.lineTo(t[1].x,t[1].y+th);ctx.lineTo(t[0].x,t[0].y+th);ctx.closePath();ctx.fill();
     ctx.beginPath();ctx.moveTo(t[1].x,t[1].y);ctx.lineTo(t[2].x,t[2].y);ctx.lineTo(t[2].x,t[2].y+th);ctx.lineTo(t[1].x,t[1].y+th);ctx.closePath();ctx.fill();
-    ctx.strokeStyle='rgba(0,0,0,.08)';ctx.lineWidth=1;for(let i=1;i<4;i++){const a=scr({x:-.22+i*2.17/4,y:-.62,z:0}),b=scr({x:-.22+i*2.17/4,y:.62,z:0});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+    ctx.strokeStyle='rgba(0,0,0,.08)';ctx.lineWidth=1;for(let i=1;i<4;i++){const a=scr({x:-.42+i*2.17/4,y:-.62,z:0}),b=scr({x:-.42+i*2.17/4,y:.62,z:0});ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
   }
-  function pathOf(p,n=48){ // Bahn der Fußgelenke über eine ganze Wiederholung
-    const pts=[];for(let i=0;i<=n;i++){const w=2*Math.PI*i/n,P=Object.assign({},p.pose(0));
-      if(p.motion==='roll')P.roll=p.amp*Math.sin(w);else P.flex=90-(90-p.lo)*(1-Math.cos(w))/2;
-      const J=mvPose(P);pts.push({x:(J.anL.x+J.anR.x)/2,y:(J.anL.y+J.anR.y)/2,z:(J.anL.z+J.anR.z)/2});}
-    return pts;}
-  function extremes(p){const a=Object.assign({},p.pose(0)),b=Object.assign({},p.pose(0));
-    if(p.motion==='roll'){a.roll=p.amp;b.roll=-p.amp;}else{a.flex=p.lo;b.flex=90;}return[mvPose(a),mvPose(b)];}
+  function pathOf(p,key,n=48){ // Bahn eines Gelenks über eine ganze Wiederholung
+    const pts=[];for(let i=0;i<=n;i++){const J=mvPose(p.at(2*Math.PI*i/n,0).P);pts.push(J[key]);}return pts;}
+  function extremes(p){return[mvPose(p.at(0,0).P),mvPose(p.at(Math.PI,0).P)];}
   function arrowPath(pts,col){
     const P=pts.map(scr);ctx.save();ctx.strokeStyle=col;ctx.lineWidth=2.2;ctx.setLineDash([6,5]);ctx.lineCap='round';
     ctx.beginPath();P.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));ctx.stroke();ctx.setLineDash([]);
@@ -4540,20 +4580,20 @@ function mountMobiRuecken(root){
     ctx.fillStyle=g;ctx.fillRect(0,0,CW,CH);
     mat();
     const st=poseAt(T),J=mvPose(st.P),cur=st.ph>=0&&st.ph<PH.length?PH[st.ph]:null;
+    const ball=cur&&cur.ball&&st.state!=='pause'?ballPos(J,st.ball||'ha'):null;
     if(cur&&st.state!=='pause'){
       if(showAll)extremes(cur).forEach(ghostFig);
-      if(showWays){const pts=pathOf(cur),tip=arrowPath(pts,'rgba(255,211,77,.9)');
-        if(cur.motion==='roll'){tip(10,12);tip(36,37);}else{tip(10,12);tip(36,38);}}
+      if(showWays)(cur.tracks||['anM']).forEach((k,n)=>{const tip=arrowPath(pathOf(cur,k),k==='haM'?'rgba(140,200,255,.85)':'rgba(255,211,77,.9)');tip(10,12);tip(34,36);});
     }
-    shadow(J);figure(J,1);
+    shadow(J);figure(J,1,ball);
     if(showAnn){
       // Schultern bleiben am Boden
-      [J.shL,J.shR].forEach(p=>{const s=scr(p);ctx.save();ctx.strokeStyle='#6fe08f';ctx.lineWidth=2.4;ctx.beginPath();ctx.arc(s.x,s.y,.075*S,0,7);ctx.stroke();ctx.restore();});
-      label({x:.3,y:.75,z:0},'Schultern am Boden',{dy:16,bg:'rgba(14,107,47,.9)'});
+      if(!cur||cur.shoulders){[J.shL,J.shR].forEach(p=>{const s=scr(p);ctx.save();ctx.strokeStyle='#6fe08f';ctx.lineWidth=2.4;ctx.beginPath();ctx.arc(s.x,s.y,.075*S,0,7);ctx.stroke();ctx.restore();});
+        label({x:.3,y:.75,z:0},'Schultern am Boden',{dy:16,bg:'rgba(14,107,47,.9)'});}
+      else if(st.state==='move'){label({x:.3,y:.75,z:0},cur.ball?'Ball: '+(st.ball==='ha'?'Hände':'Füße'):'Oberkörper hoch · Hände nach vorne',{dy:16,bg:'rgba(14,107,47,.9)'});}
       if(cur&&st.state==='move'){const k=st.P;
-        const t=cur.motion==='roll'?(Math.abs(k.roll)>4?Math.round(Math.abs(k.roll))+'° '+(k.roll>0?'rechts':'links'):'Mitte'):Math.round(k.flex)+'°';
-        const a=mvPose(k),m={x:(a.anL.x+a.anR.x)/2,y:(a.anL.y+a.anR.y)/2,z:(a.anL.z+a.anR.z)/2+.12};
-        label(m,t,{dx:52,dy:-10});}
+        const t=cur.lab?cur.lab(k):'';
+        if(t){const m=Object.assign({},J.anM);m.z+=.12;label(m,t,{dx:52,dy:-10});}}
     }
   }
   /* ---------- UI ---------- */
@@ -4565,7 +4605,7 @@ function mountMobiRuecken(root){
   function updateUI(){
     const st=poseAt(T);let s,ti,tx;
     if(T===0&&!playing){s='Bewegung · '+PH.length+' Übungen';ti=C.title;tx='▶ Abspielen startet die Übungsfolge. Jede Übung '+reps+' Wiederholungen, dazwischen kurz in die Startposition.';}
-    else if(st.state==='done'){s='Fertig';ti='Alle drei Übungen geschafft';tx='Beine ablegen, kurz durchatmen. Mit ⟲ Neu von vorn.';}
+    else if(st.state==='done'){s='Fertig';ti='Alle '+PH.length+' Übungen geschafft';tx='Beine ablegen, kurz durchatmen. Mit ⟲ Neu von vorn.';}
     else{const i=st.state==='pause'?Math.min(st.seg.i,PH.length-1):st.ph,p=PH[i];
       s='Übung '+p.nr+' von 0'+PH.length+(st.state==='move'?' · Wiederholung '+st.rep+' von '+reps+' · '+st.dir:st.state==='in'?' · in die Startposition':' · gleich geht’s los');
       ti=p.title;tx=p.text;}
